@@ -164,6 +164,13 @@ export class Toolbar {
             </svg>
           </button>
 
+          <!-- Presentation / Fullscreen Mode -->
+          <button id="btn-presentation" class="btn-icon" data-tooltip="Presentation Mode (P)" title="Presentation Mode">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path>
+            </svg>
+          </button>
+
           <!-- Samples Selector -->
           <select id="select-samples" class="zoom-select" style="font-weight: 600; color: var(--primary); border: 1px solid var(--border); padding: 3px 6px; border-radius: 6px;" title="Sample Documents">
             <option value="" disabled selected>Samples ▾</option>
@@ -393,6 +400,12 @@ export class Toolbar {
 
     // Dark Mode
     this.container.querySelector('#btn-toggle-dark').addEventListener('click', () => this.onAction('toggle-dark'));
+
+    // Presentation Mode
+    const presBtn = this.container.querySelector('#btn-presentation');
+    if (presBtn) {
+      presBtn.addEventListener('click', () => this.onAction('toggle-presentation'));
+    }
 
     // Samples Dropdown
     const sampleSelect = this.container.querySelector('#select-samples');

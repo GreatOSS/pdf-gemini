@@ -32,6 +32,13 @@ Click the **Moon/Dark Mode** button (`D`) to activate Smart Inverted Reading Mod
 - Preserves natural color balances on embedded images and photos.
 - Eases eye strain during long reading sessions in low-light environments.
 
+### Presentation Mode
+Click the **Presentation Mode** button (`P`):
+- Expands document page to fit the screen (`fit-page`) against a deep cinematic backdrop.
+- Hides all toolbars and sidebars to eliminate distractions during meetings and lectures.
+- Use `ArrowRight` / `Space` to advance slides and `ArrowLeft` / `Backspace` to go back.
+- A floating controls HUD appears on mouse movement with slide counter and exit button. Press `Esc` or `P` to return to editing.
+
 ---
 
 ## 2. Annotations & Markup Tools
@@ -167,7 +174,10 @@ Click **Organize** in the header or use the **Pages** sidebar tab:
 | `PageUp` / `[` | Previous page |
 | `H` | Hand (Pan) tool |
 | `V` | Selection cursor tool |
+| `P` | Toggle Presentation Mode |
 | `D` | Toggle Smart Dark Reading Mode |
 | `B` | Toggle Sidebar |
+| `Home` / `End` | Jump to First / Last page |
+| `j` / `k` | Scroll down / up smoothly |
 | `?` | Open Help & Shortcuts dialog |
-| `Escape` | Close active dialog or search bar |
+| `Escape` | Close active dialog or exit presentation |

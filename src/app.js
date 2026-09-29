@@ -85,6 +85,9 @@ export class FolioFluxApp {
       onPageChange: (pageNum) => {
         this.toolbar.setCurrentPage(pageNum);
         this.sidebar.setActivePage(pageNum - 1);
+        if (this.isPresentationMode) {
+          this.updatePresentationHud();
+        }
       },
     });
 
@@ -207,6 +210,8 @@ export class FolioFluxApp {
       this.ttsController.toggle();
     } else if (action === 'toggle-dark') {
       this.toggleReadingDark();
+    } else if (action === 'toggle-presentation') {
+      this.togglePresentationMode();
     } else if (action === 'load-sample') {
       if (data === 'tour') this.loadSampleTour();
       else if (data === 'nda') this.loadSampleContract();
@@ -432,6 +437,62 @@ export class FolioFluxApp {
     this.showToast(this.isDocInvert ? 'Dark Reading Mode ON' : 'Standard Reading Mode ON');
   }
 
+  togglePresentationMode() {
+    this.isPresentationMode = !this.isPresentationMode;
+    document.body.classList.toggle('presentation-mode', this.isPresentationMode);
+
+    if (this.isPresentationMode) {
+      this.canvasView.setLayoutMode('single');
+      this.canvasView.setScale('fit-page');
+      this.renderPresentationHud();
+      this.showToast('Presentation Mode (Press Esc or P to exit)');
+    } else {
+      const hud = document.getElementById('presentation-hud');
+      if (hud) hud.remove();
+      this.canvasView.setLayoutMode('continuous');
+      this.canvasView.setScale(1.0);
+    }
+  }
+
+  renderPresentationHud() {
+    let hud = document.getElementById('presentation-hud');
+    if (!hud) {
+      hud = document.createElement('div');
+      hud.id = 'presentation-hud';
+      hud.className = 'presentation-hud';
+      document.body.appendChild(hud);
+    }
+    hud.innerHTML = `
+      <button id="hud-prev" title="Previous Slide">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polyline points="15 18 9 12 15 6"></polyline></svg>
+      </button>
+      <span id="hud-page" style="font-size: 13px; font-weight: 600;">${this.canvasView.currentPage} / ${this.pdfEngine.numPages}</span>
+      <button id="hud-next" title="Next Slide">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polyline points="9 18 15 12 9 6"></polyline></svg>
+      </button>
+      <button id="hud-exit" title="Exit Presentation" style="margin-left: 8px; font-size: 12px; font-weight: 600; padding: 2px 8px; background: rgba(255,255,255,0.2); border-radius: 4px;">Exit</button>
+    `;
+
+    hud.querySelector('#hud-prev').addEventListener('click', () => {
+      this.canvasView.scrollToPage(Math.max(1, this.canvasView.currentPage - 1));
+      this.updatePresentationHud();
+    });
+    hud.querySelector('#hud-next').addEventListener('click', () => {
+      this.canvasView.scrollToPage(Math.min(this.pdfEngine.numPages, this.canvasView.currentPage + 1));
+      this.updatePresentationHud();
+    });
+    hud.querySelector('#hud-exit').addEventListener('click', () => {
+      this.togglePresentationMode();
+    });
+  }
+
+  updatePresentationHud() {
+    const pageSpan = document.getElementById('hud-page');
+    if (pageSpan) {
+      pageSpan.textContent = `${this.canvasView.currentPage} / ${this.pdfEngine.numPages}`;
+    }
+  }
+
   showOptionsMenu() {
     const choice = prompt('Options:\n1: Document Properties\n2: Keyboard Shortcuts\n3: Load Interactive NDA Form\n4: Load Quickstart Tour\n5: Print Document\n\nEnter number (1-5):', '1');
     if (choice === '1') this.propertiesModal.open();
@@ -488,6 +549,22 @@ export class FolioFluxApp {
           this.toolbar.setActiveTool('hand');
         } else if (e.key === 'v' || e.key === 'V') {
           this.toolbar.setActiveTool('select');
+        } else if (e.key === 'p' || e.key === 'P') {
+          this.togglePresentationMode();
+        } else if (e.key === 'Escape') {
+          if (this.isPresentationMode) this.togglePresentationMode();
+        } else if (e.key === 'ArrowRight' || (e.key === ' ' && this.isPresentationMode)) {
+          this.handleToolbarAction('next-page');
+        } else if (e.key === 'ArrowLeft') {
+          this.handleToolbarAction('prev-page');
+        } else if (e.key === 'Home') {
+          this.canvasView.scrollToPage(1);
+        } else if (e.key === 'End') {
+          this.canvasView.scrollToPage(this.pdfEngine.numPages);
+        } else if (e.key === 'j') {
+          this.canvasView.scrollContainer.scrollTop += 80;
+        } else if (e.key === 'k') {
+          this.canvasView.scrollContainer.scrollTop -= 80;
         } else if (e.key === '?') {
           this.shortcutsModal.open();
         }

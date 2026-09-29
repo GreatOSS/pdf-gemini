@@ -84,6 +84,10 @@ During interactive testing via Playwright browser and desktop computer-use tools
    - *Requirement*: Architecture, design, and technical users require a ruler to measure distances across blueprints and diagrams.
    - *Implementation*: Added interactive Measure tool supporting Inches, Millimeters, and Points (72 pt = 1 in = 25.4 mm) with live drag feedback, orthogonal dimension end-caps, interactive deletion, and binary PDF export.
 
+12. **Presentation Mode & Fullscreen Slide Navigation**:
+   - *Requirement*: Presenters, students, and lecturers require a clean slide presentation view without UI chrome or toolbar distraction.
+   - *Implementation*: Added Presentation Mode (`P` or toolbar icon) with automatic fit-page scaling, cinematic black backdrop, floating auto-fading navigation HUD, and keyboard hotkeys (`Space`, `Arrows`, `Home`/`End`, `j`/`k`, `Esc`).
+
 ---
 
 ## 4. Automated Test Suite Status

@@ -1089,3 +1089,63 @@ button, input, select, textarea {
   outline: 2px solid var(--primary);
   outline-offset: 1px;
 }
+
+/* Presentation Mode */
+body.presentation-mode .app-header,
+body.presentation-mode .toolstrip,
+body.presentation-mode .app-sidebar {
+  display: none !important;
+}
+
+body.presentation-mode .canvas-container {
+  padding: 0;
+  background-color: #000000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+body.presentation-mode .page-canvas-wrapper {
+  box-shadow: none;
+  border-radius: 0;
+}
+
+.presentation-hud {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: rgba(15, 23, 42, 0.88);
+  backdrop-filter: blur(8px);
+  color: #ffffff;
+  padding: 6px 16px;
+  border-radius: 30px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  z-index: 200;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+body.presentation-mode:hover .presentation-hud,
+.presentation-hud:hover {
+  opacity: 1;
+}
+
+.presentation-hud button {
+  background: transparent;
+  border: none;
+  color: #ffffff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  padding: 4px;
+  border-radius: 4px;
+  transition: background-color 0.15s ease;
+}
+
+.presentation-hud button:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+}
