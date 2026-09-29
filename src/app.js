@@ -254,6 +254,10 @@ export class FolioFluxApp {
       this.pdfEngine.rotatePage(data.pageIndex, data.degrees);
       await this.canvasView.renderPage(data.pageIndex);
       this.sidebar.updateContent();
+    } else if (action === 'rotate-all') {
+      this.pdfEngine.rotateAllPages(data || 90);
+      await this.canvasView.buildPages();
+      this.sidebar.updateContent();
     } else if (action === 'delete-page') {
       if (this.pdfEngine.numPages <= 1) {
         alert('Cannot delete the only page in the document.');

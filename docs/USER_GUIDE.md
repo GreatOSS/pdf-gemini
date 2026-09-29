@@ -130,8 +130,9 @@ Click the **Watermark** icon in the toolstrip to open the customization dialog:
 ## 4. Page Organizer & Manipulation
 
 Click **Organize** in the header or use the **Pages** sidebar tab:
-- **Rotate Pages**: Rotate individual pages or all pages 90° Clockwise, Counter-Clockwise, or 180°.
-- **Reorder Pages**: Drag-and-drop page cards to reorder pages intuitively.
+- **Rotate All Pages**: Quick-rotate all document pages 90° CW directly from the Pages sidebar header, or rotate 90° CW / CCW from the Page Organizer modal.
+- **Rotate Individual Pages**: Rotate specific pages 90° Clockwise, Counter-Clockwise, or 180°.
+- **Reorder Pages**: Drag-and-drop page cards in the organizer grid or sidebar thumbnail list, or use `<` and `>` nudge buttons.
 - **Duplicate Page**: Create an identical copy of any page.
 - **Delete Page**: Remove unwanted pages with confirmation.
 - **Merge Documents**: Use the CLI `folioflux merge file1.pdf file2.pdf -o merged.pdf` to combine documents.

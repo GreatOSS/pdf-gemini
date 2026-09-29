@@ -38,7 +38,8 @@ export class PageOrganizerModal {
 
         <div class="modal-footer" style="justify-content: space-between;">
           <div style="display: flex; gap: 8px;">
-            <button class="btn" id="btn-org-rotate-all">Rotate All (90° CW)</button>
+            <button class="btn" id="btn-org-rotate-all">Rotate All CW (+90°)</button>
+            <button class="btn" id="btn-org-rotate-all-ccw">Rotate All CCW (-90°)</button>
           </div>
           <div style="display: flex; gap: 8px;">
             <button class="btn" id="btn-org-cancel">Cancel</button>
@@ -54,6 +55,9 @@ export class PageOrganizerModal {
   bindEvents() {
     this.overlay.querySelector('.btn-close-modal').addEventListener('click', () => this.close());
     this.overlay.querySelector('#btn-org-cancel').addEventListener('click', () => this.close());
+    this.overlay.addEventListener('click', (e) => {
+      if (e.target === this.overlay) this.close();
+    });
     this.overlay.querySelector('#btn-org-done').addEventListener('click', () => {
       this.close();
       this.onApply();
@@ -61,6 +65,11 @@ export class PageOrganizerModal {
 
     this.overlay.querySelector('#btn-org-rotate-all').addEventListener('click', () => {
       this.pdfEngine.rotateAllPages(90);
+      this.refreshGrid();
+    });
+
+    this.overlay.querySelector('#btn-org-rotate-all-ccw').addEventListener('click', () => {
+      this.pdfEngine.rotateAllPages(-90);
       this.refreshGrid();
     });
   }

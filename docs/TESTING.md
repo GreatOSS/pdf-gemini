@@ -130,6 +130,10 @@ During interactive testing via Playwright browser and desktop computer-use tools
 23. **Single-Key Tool Keyboard Shortcuts**:
    - *Improvement*: Added single-key shortcuts (`V` Select, `H` Hand, `E` Highlighter, `T` Text, `N` Sticky Note, `R` Rect, `C` Circle, `M` Measure) for rapid, seamless markup workflows without toolbar mouse travel.
 
+24. **Rotate All Pages Quick Actions**:
+   - *Requirement*: Users frequently open scanned documents where all pages were captured sideways or upside down.
+   - *Implementation*: Added one-click Rotate All CW button to the thumbnail sidebar header and dedicated Rotate All CW (+90°) / CCW (-90°) buttons in the Page Organizer modal. Verified with live desktop interaction on DISPLAY=:101.
+
 ---
 
 ## 4. Automated Test Suite Status

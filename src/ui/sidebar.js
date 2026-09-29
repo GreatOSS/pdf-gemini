@@ -121,7 +121,27 @@ export class Sidebar {
   }
 
   async renderThumbnails(container) {
-    container.innerHTML = `<div class="thumbnail-list" id="thumbnail-list"></div>`;
+    container.innerHTML = `
+      <div class="thumbnail-header" style="display: flex; justify-content: space-between; align-items: center; padding: 10px 14px 6px 14px; font-size: 12px; font-weight: 700; color: var(--text-muted); border-bottom: 1px solid var(--border);">
+        <span>${this.pdfEngine.numPages} Page${this.pdfEngine.numPages > 1 ? 's' : ''}</span>
+        <div style="display: flex; gap: 4px;">
+          <button class="btn-icon" id="btn-thumb-rotate-all" title="Rotate All 90° CW" style="padding: 3px;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13">
+              <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path>
+            </svg>
+          </button>
+        </div>
+      </div>
+      <div class="thumbnail-list" id="thumbnail-list"></div>
+    `;
+
+    const rotateAllBtn = container.querySelector('#btn-thumb-rotate-all');
+    if (rotateAllBtn) {
+      rotateAllBtn.addEventListener('click', () => {
+        this.onAction('rotate-all', 90);
+      });
+    }
+
     const list = container.querySelector('#thumbnail-list');
 
     for (let i = 0; i < this.pdfEngine.numPages; i++) {
