@@ -156,6 +156,7 @@ Click **Organize** in the header or use the **Pages** sidebar tab:
   - `folioflux merge doc1.pdf doc2.pdf -o out.pdf`
   - `folioflux split doc.pdf -o ./pages`
   - `folioflux rotate doc.pdf -o upright.pdf --angle 90`
+  - `folioflux extract-text doc.pdf [-o text.txt]`
 
 ---
 

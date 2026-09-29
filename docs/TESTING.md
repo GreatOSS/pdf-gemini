@@ -96,21 +96,26 @@ During interactive testing via Playwright browser and desktop computer-use tools
    - *Requirement*: Validate application behavior on wide 16:9 / 4:3 landscape dimensions and architectural blueprints.
    - *Implementation*: Added interactive `createPresentationSamplePDF` (792x612 pt) with multi-column metric cards and blueprint test zone; confirmed dynamic wrapper resizing, dimension measuring, and slide presentation HUD.
 
+15. **CLI Text Extraction Pipeline**:
+   - *Requirement*: Enable fast command-line extraction of plain text from multi-page PDFs to stdout or formatted files.
+   - *Implementation*: Added `folioflux extract-text` CLI subcommand with standardFontDataUrl resolution, supporting batch piping and shell scripts. Verified with automated regression tests.
+
 ---
 
 ## 4. Automated Test Suite Status
 
 ```
-✔ AnnotationsManager add, undo, and redo (1.00ms)
-✔ AnnotationsManager update and delete (0.27ms)
-✔ CLI --version and --help output (251.68ms)
-✔ CLI info on generated sample file (200.36ms)
-✔ PDF creation and page addition (25.13ms)
-✔ PDF page rotation (3.51ms)
-✔ PDF merge multiple documents (4.74ms)
-✔ PDF split document (1.85ms)
-✔ PDF watermark and page numbering export (11.53ms)
-✔ PDF measurement annotation export (5.38ms)
+✔ AnnotationsManager add, undo, and redo (0.94ms)
+✔ AnnotationsManager update and delete (0.26ms)
+✔ CLI --version and --help output (246.05ms)
+✔ CLI info on generated sample file (190.74ms)
+✔ CLI extract-text from document (304.41ms)
+✔ PDF creation and page addition (26.78ms)
+✔ PDF page rotation (3.25ms)
+✔ PDF merge multiple documents (2.73ms)
+✔ PDF split document (1.73ms)
+✔ PDF watermark and page numbering export (11.44ms)
+✔ PDF measurement annotation export (4.28ms)
 
-Total: 10 tests passed, 0 failures, 0 skipped.
+Total: 11 tests passed, 0 failures, 0 skipped.
 ```

@@ -42,3 +42,26 @@ test('CLI info on generated sample file', async () => {
 
   fs.rmSync(tmpDir, { recursive: true, force: true });
 });
+
+test('CLI extract-text from document', async () => {
+  const tmpDir = path.resolve('/tmp/opencode/cli-extract-test');
+  if (!fs.existsSync(tmpDir)) fs.mkdirSync(tmpDir, { recursive: true });
+
+  const { PDFDocument, StandardFonts } = await import('pdf-lib');
+  const doc = await PDFDocument.create();
+  const page = doc.addPage([500, 700]);
+  const font = await doc.embedFont(StandardFonts.Helvetica);
+  page.drawText('FolioFlux CLI Extract Test String', { x: 50, y: 650, size: 14, font });
+
+  const testFile = path.join(tmpDir, 'test-extract.pdf');
+  const outFile = path.join(tmpDir, 'extracted.txt');
+  fs.writeFileSync(testFile, await doc.save());
+
+  const { stdout } = await execFileAsync('node', [CLI_PATH, 'extract-text', testFile, '-o', outFile]);
+  assert.ok(stdout.includes('Successfully extracted text'));
+
+  const content = fs.readFileSync(outFile, 'utf-8');
+  assert.ok(content.includes('FolioFlux CLI Extract Test String'));
+
+  fs.rmSync(tmpDir, { recursive: true, force: true });
+});

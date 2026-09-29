@@ -47,6 +47,8 @@ Commands:
   split <file.pdf> -o <dir>   Split a PDF into individual page files
   rotate <file.pdf> -o <out> --angle <90|180|270> [--pages 1,2...]
                               Rotate pages by a specified angle
+  extract-text <file.pdf> [-o <out>]
+                              Extract all plain text from document
   help, --help, -h            Show this help manual
   version, --version, -v      Show current version
 
@@ -201,6 +203,42 @@ async function handleRotate(args) {
   const outBytes = await doc.save();
   fs.writeFileSync(outPath, outBytes);
   console.log(`Successfully rotated all ${count} pages by ${angle}° -> ${outPath}`);
+}
+
+async function handleExtractText(args) {
+  const filePath = args[0];
+  let outIndex = args.indexOf('-o');
+  if (outIndex === -1) outIndex = args.indexOf('--output');
+  const outPath = outIndex !== -1 ? args[outIndex + 1] : null;
+
+  if (!filePath || !fs.existsSync(filePath)) {
+    console.error(`Error: File not found: ${filePath}`);
+    process.exit(1);
+  }
+
+  const pdfjsLib = await import('pdfjs-dist/legacy/build/pdf.mjs');
+  const bytes = fs.readFileSync(filePath);
+  const loadingTask = pdfjsLib.getDocument({
+    data: new Uint8Array(bytes),
+    standardFontDataUrl: path.join(ROOT_DIR, 'public/standard_fonts/'),
+  });
+  const doc = await loadingTask.promise;
+  const count = doc.numPages;
+
+  let fullText = '';
+  for (let i = 1; i <= count; i++) {
+    const page = await doc.getPage(i);
+    const content = await page.getTextContent();
+    const pageText = content.items.map(it => it.str).join(' ');
+    fullText += `--- Page ${i} ---\n${pageText}\n\n`;
+  }
+
+  if (outPath) {
+    fs.writeFileSync(outPath, fullText, 'utf-8');
+    console.log(`Successfully extracted text from ${count} pages -> ${outPath}`);
+  } else {
+    process.stdout.write(fullText);
+  }
 }
 
 function startServer({ port = 4080, host = '127.0.0.1', initialDocPath = null }) {
@@ -364,6 +402,11 @@ async function main() {
 
   if (cmd === 'rotate') {
     await handleRotate(args.slice(1));
+    return;
+  }
+
+  if (cmd === 'extract-text') {
+    await handleExtractText(args.slice(1));
     return;
   }
 
