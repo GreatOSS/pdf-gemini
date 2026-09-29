@@ -13,6 +13,7 @@ FolioFlux is a fast, beautiful, and privacy-first open-source PDF viewer and edi
 - **Samples Selector**: Choose from the **Samples ▾** dropdown in the header to switch instantly between:
   - *Tour Guide*: 3-page interactive feature showcase.
   - *Fillable NDA*: Interactive bilateral NDA contract with fillable AcroForm fields and signature block.
+  - *Slides (Landscape)*: 2-page widescreen presentation deck and technical schematics blueprint.
   - *Blank Doc*: Create a fresh blank document for sketches and notes.
 
 ### Viewing Modes & Layouts

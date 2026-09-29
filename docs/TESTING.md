@@ -92,6 +92,10 @@ During interactive testing via Playwright browser and desktop computer-use tools
    - *Improvement*: Configured Rollup manualChunks splitting for `pdfjs` and `pdflib`, reducing initial app bundle to ~135KB (30KB gzipped).
    - *Interaction*: Added `Ctrl + Wheel` zooming and instant `Enter` key page jumping in the header input.
 
+14. **Landscape Presentation & Blueprint Schematics**:
+   - *Requirement*: Validate application behavior on wide 16:9 / 4:3 landscape dimensions and architectural blueprints.
+   - *Implementation*: Added interactive `createPresentationSamplePDF` (792x612 pt) with multi-column metric cards and blueprint test zone; confirmed dynamic wrapper resizing, dimension measuring, and slide presentation HUD.
+
 ---
 
 ## 4. Automated Test Suite Status

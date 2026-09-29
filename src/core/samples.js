@@ -571,3 +571,149 @@ export async function createContractSamplePDF() {
 
   return await doc.save();
 }
+
+/**
+ * Generates a 2-page landscape presentation slide deck sample PDF (792x612).
+ */
+export async function createPresentationSamplePDF() {
+  const doc = await PDFDocument.create();
+  const fontRegular = await doc.embedFont(StandardFonts.Helvetica);
+  const fontBold = await doc.embedFont(StandardFonts.HelveticaBold);
+
+  // Slide 1 (Landscape: 792 x 612)
+  const s1 = doc.addPage([792, 612]);
+  const { width: w1, height: h1 } = s1.getSize();
+
+  // Background header band
+  s1.drawRectangle({
+    x: 0,
+    y: h1 - 140,
+    width: w1,
+    height: 140,
+    color: rgb(0.06, 0.09, 0.16), // #0f172a
+  });
+
+  s1.drawText('FolioFlux Architecture & Roadmap Deck', {
+    x: 54,
+    y: h1 - 70,
+    size: 26,
+    font: fontBold,
+    color: rgb(1, 1, 1),
+  });
+
+  s1.drawText('High-Performance Open-Source PDF Platform — Landscape Presentation Format', {
+    x: 54,
+    y: h1 - 100,
+    size: 13,
+    font: fontRegular,
+    color: rgb(0.6, 0.7, 0.9),
+  });
+
+  // 3 Metric Cards
+  const cards = [
+    { title: 'Sub-Millisecond Speed', stat: '< 15ms', desc: 'Hardware-accelerated high-DPI canvas rendering pipeline.' },
+    { title: 'Local Privacy Guarantee', stat: '100% Local', desc: 'Zero external cloud roundtrips, tracking, or telemetry.' },
+    { title: 'Uncompromising UX', stat: '10+ Tools', desc: 'Inking, forms, signatures, measuring, and watermarks.' },
+  ];
+
+  let cardX = 54;
+  for (const c of cards) {
+    s1.drawRectangle({
+      x: cardX,
+      y: 180,
+      width: 214,
+      height: 220,
+      color: rgb(0.96, 0.98, 1.0),
+      borderColor: rgb(0.8, 0.85, 0.95),
+      borderWidth: 1.5,
+    });
+
+    s1.drawText(c.title, { x: cardX + 16, y: 360, size: 12, font: fontBold, color: rgb(0.31, 0.27, 0.9) });
+    s1.drawText(c.stat, { x: cardX + 16, y: 310, size: 24, font: fontBold, color: rgb(0.06, 0.09, 0.16) });
+    s1.drawText(c.desc, { x: cardX + 16, y: 260, size: 10.5, font: fontRegular, color: rgb(0.4, 0.45, 0.55), maxWidth: 180, lineHeight: 15 });
+
+    cardX += 236;
+  }
+
+  // Footer Slide 1
+  s1.drawText('FolioFlux Presentation Deck — Slide 1 of 2 (Press P for Presentation Mode)', {
+    x: 54,
+    y: 36,
+    size: 9.5,
+    font: fontRegular,
+    color: rgb(0.5, 0.55, 0.65),
+  });
+
+  // Slide 2: Technical Flow & Schematic
+  const s2 = doc.addPage([792, 612]);
+  s2.drawText('Technical Schematics & Blueprint Layout', {
+    x: 54,
+    y: h1 - 60,
+    size: 20,
+    font: fontBold,
+    color: rgb(0.06, 0.09, 0.16),
+  });
+
+  s2.drawText('Ideal for testing horizontal scrolling, dimension measuring, and diagram annotations.', {
+    x: 54,
+    y: h1 - 85,
+    size: 11,
+    font: fontRegular,
+    color: rgb(0.4, 0.45, 0.55),
+  });
+
+  // Blueprint diagram box
+  s2.drawRectangle({
+    x: 54,
+    y: 120,
+    width: 684,
+    height: 360,
+    color: rgb(0.98, 0.99, 1.0),
+    borderColor: rgb(0.7, 0.75, 0.85),
+    borderWidth: 1,
+  });
+
+  s2.drawText('Dimension & Distance Measurement Test Zone (Scale: 1 in = 100 ft)', {
+    x: 74,
+    y: 445,
+    size: 13,
+    font: fontBold,
+    color: rgb(0.2, 0.25, 0.4),
+  });
+
+  // Test rectangle for measuring
+  s2.drawRectangle({
+    x: 74,
+    y: 180,
+    width: 320,
+    height: 200,
+    borderColor: rgb(0.31, 0.27, 0.9),
+    borderWidth: 2,
+    color: rgb(0.93, 0.95, 1.0),
+  });
+  s2.drawText('Zone A: Main Processing Hub (320 pt x 200 pt)', { x: 90, y: 350, size: 11, font: fontBold, color: rgb(0.31, 0.27, 0.9) });
+  s2.drawText('Try using the Measure / Ruler tool to verify dimensions.', { x: 90, y: 325, size: 9.5, font: fontRegular, color: rgb(0.4, 0.45, 0.55) });
+
+  // Zone B
+  s2.drawRectangle({
+    x: 430,
+    y: 180,
+    width: 280,
+    height: 200,
+    borderColor: rgb(0.1, 0.7, 0.4),
+    borderWidth: 2,
+    color: rgb(0.94, 0.99, 0.95),
+  });
+  s2.drawText('Zone B: Native Exporter (280 pt x 200 pt)', { x: 446, y: 350, size: 11, font: fontBold, color: rgb(0.05, 0.5, 0.3) });
+
+  // Footer Slide 2
+  s2.drawText('FolioFlux Presentation Deck — Slide 2 of 2', {
+    x: 54,
+    y: 36,
+    size: 9.5,
+    font: fontRegular,
+    color: rgb(0.5, 0.55, 0.65),
+  });
+
+  return await doc.save();
+}

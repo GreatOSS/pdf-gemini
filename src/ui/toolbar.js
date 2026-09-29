@@ -176,6 +176,7 @@ export class Toolbar {
             <option value="" disabled selected>Samples ▾</option>
             <option value="tour">Tour Guide</option>
             <option value="nda">Fillable NDA</option>
+            <option value="slides">Slides (Landscape)</option>
             <option value="blank">Blank Doc</option>
           </select>
 

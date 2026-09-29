@@ -8,7 +8,7 @@ import { AnnotationsManager } from './core/annotations-manager.js';
 import { SearchEngine } from './core/search-engine.js';
 import { FormEngine } from './core/form-engine.js';
 import { PDFExporter } from './core/pdf-exporter.js';
-import { createTourSamplePDF, createContractSamplePDF } from './core/samples.js';
+import { createTourSamplePDF, createContractSamplePDF, createPresentationSamplePDF } from './core/samples.js';
 import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
 
 import { Toolbar } from './ui/toolbar.js';
@@ -218,6 +218,7 @@ export class FolioFluxApp {
     } else if (action === 'load-sample') {
       if (data === 'tour') this.loadSampleTour();
       else if (data === 'nda') this.loadSampleContract();
+      else if (data === 'slides') this.loadSamplePresentation();
       else if (data === 'blank') this.loadBlankDocument();
     } else if (action === 'export-format') {
       if (data === 'pdf') this.savePDF();
@@ -296,6 +297,11 @@ export class FolioFluxApp {
   async loadSampleContract() {
     const bytes = await createContractSamplePDF();
     await this.loadDocumentBytes(bytes, 'Mutual-NDA-Interactive-Form.pdf');
+  }
+
+  async loadSamplePresentation() {
+    const bytes = await createPresentationSamplePDF();
+    await this.loadDocumentBytes(bytes, 'FolioFlux-Landscape-Slides.pdf');
   }
 
   async loadBlankDocument() {
