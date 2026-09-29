@@ -4,13 +4,14 @@
  */
 
 export class CanvasView {
-  constructor({ container, pdfEngine, annotationsManager, formEngine, onPageChange, onScaleChange }) {
+  constructor({ container, pdfEngine, annotationsManager, formEngine, onPageChange, onScaleChange, onOpenSignatureModal }) {
     this.container = container;
     this.pdfEngine = pdfEngine;
     this.annotationsManager = annotationsManager;
     this.formEngine = formEngine;
     this.onPageChange = onPageChange;
     this.onScaleChange = onScaleChange;
+    this.onOpenSignatureModal = onOpenSignatureModal || null;
 
     this.scale = 1.0;
     this.layoutMode = 'continuous'; // continuous, single, two-page
@@ -582,8 +583,8 @@ export class CanvasView {
         height: 60,
         dataUrl: this.currentSignatureData,
       });
-    } else {
-      alert('Please create or draw a signature first via the Signature modal.');
+    } else if (this.onOpenSignatureModal) {
+      this.onOpenSignatureModal(pageIndex, pt);
     }
   }
 

@@ -94,6 +94,10 @@ export class FolioFluxApp {
       onScaleChange: (scale) => {
         this.toolbar.setZoom(scale);
       },
+      onOpenSignatureModal: (pageIndex, pt) => {
+        this.pendingSignaturePoint = { pageIndex, pt };
+        this.signatureModal.open();
+      },
     });
 
     // Sidebar
@@ -118,7 +122,14 @@ export class FolioFluxApp {
     this.signatureModal = new SignatureModal({
       onApply: (dataUrl) => {
         this.canvasView.currentSignatureData = dataUrl;
-        this.showToast('Signature ready! Click anywhere on a page to stamp it.');
+        if (this.pendingSignaturePoint) {
+          const { pageIndex, pt } = this.pendingSignaturePoint;
+          this.canvasView.createSignatureAnnotation(pageIndex, pt);
+          this.pendingSignaturePoint = null;
+          this.showToast('Signature placed on document!');
+        } else {
+          this.showToast('Signature ready! Click anywhere on a page to stamp it.');
+        }
       },
     });
 

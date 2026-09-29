@@ -84,6 +84,9 @@ export class SignatureModal {
 
     closeBtn.addEventListener('click', () => this.close());
     cancelBtn.addEventListener('click', () => this.close());
+    this.overlay.addEventListener('click', (e) => {
+      if (e.target === this.overlay) this.close();
+    });
 
     // Tab switching
     const drawTab = this.overlay.querySelector('#tab-draw-sig');

@@ -146,6 +146,10 @@ During interactive testing via Playwright browser and desktop computer-use tools
    - *Requirement*: Support standard flag variants (`-o`, `--output`, `--outdir`, `--output-dir`) across CLI subcommands (`split`, `merge`, `rotate`, `extract-text`, `info`).
    - *Implementation*: Expanded CLI flag parsing in `bin/folioflux.js` and added automated regression tests in `tests/cli.test.js` validating the full headless splitting, merging, rotating, and inspection pipeline.
 
+28. **Digital Signature Direct Placement Flow & Backdrop Dismissal**:
+   - *Requirement*: Eliminate alert interruptions when stamping signatures without pre-drawn signatures, placing them directly at the targeted point upon creation.
+   - *Implementation*: Connected `onOpenSignatureModal(pageIndex, pt)` in `CanvasView` to store target coordinates and auto-stamp the created signature upon applying; added backdrop click-to-close on `SignatureModal`. Verified on DISPLAY=:101.
+
 ---
 
 ## 4. Automated Test Suite Status
