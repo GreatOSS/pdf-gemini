@@ -89,6 +89,9 @@ export class FolioFluxApp {
           this.updatePresentationHud();
         }
       },
+      onScaleChange: (scale) => {
+        this.toolbar.setZoom(scale);
+      },
     });
 
     // Sidebar

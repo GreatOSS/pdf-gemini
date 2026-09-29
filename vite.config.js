@@ -8,6 +8,15 @@ export default defineConfig({
     outDir: 'dist',
     target: 'es2022',
     emptyOutDir: true,
+    chunkSizeWarningLimit: 1000,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          pdfjs: ['pdfjs-dist'],
+          pdflib: ['pdf-lib'],
+        },
+      },
+    },
   },
   server: {
     port: 5173,

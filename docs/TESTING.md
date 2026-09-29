@@ -88,6 +88,10 @@ During interactive testing via Playwright browser and desktop computer-use tools
    - *Requirement*: Presenters, students, and lecturers require a clean slide presentation view without UI chrome or toolbar distraction.
    - *Implementation*: Added Presentation Mode (`P` or toolbar icon) with automatic fit-page scaling, cinematic black backdrop, floating auto-fading navigation HUD, and keyboard hotkeys (`Space`, `Arrows`, `Home`/`End`, `j`/`k`, `Esc`).
 
+13. **Bundle Optimization & Smooth Canvas Zoom**:
+   - *Improvement*: Configured Rollup manualChunks splitting for `pdfjs` and `pdflib`, reducing initial app bundle to ~135KB (30KB gzipped).
+   - *Interaction*: Added `Ctrl + Wheel` zooming and instant `Enter` key page jumping in the header input.
+
 ---
 
 ## 4. Automated Test Suite Status

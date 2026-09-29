@@ -375,7 +375,16 @@ export class Toolbar {
     this.container.querySelector('#btn-toggle-sidebar').addEventListener('click', () => this.onAction('toggle-sidebar'));
     this.container.querySelector('#btn-prev-page').addEventListener('click', () => this.onAction('prev-page'));
     this.container.querySelector('#btn-next-page').addEventListener('click', () => this.onAction('next-page'));
-    this.container.querySelector('#page-num-input').addEventListener('change', (e) => this.onAction('goto-page', parseInt(e.target.value, 10)));
+    
+    const pageNumInput = this.container.querySelector('#page-num-input');
+    pageNumInput.addEventListener('change', (e) => this.onAction('goto-page', parseInt(e.target.value, 10)));
+    pageNumInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        this.onAction('goto-page', parseInt(e.target.value, 10));
+        pageNumInput.blur();
+      }
+    });
+
     this.container.querySelector('#btn-zoom-in').addEventListener('click', () => this.onAction('zoom-in'));
     this.container.querySelector('#btn-zoom-out').addEventListener('click', () => this.onAction('zoom-out'));
     this.container.querySelector('#zoom-select').addEventListener('change', (e) => this.onAction('set-zoom', e.target.value));

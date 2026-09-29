@@ -4,12 +4,13 @@
  */
 
 export class CanvasView {
-  constructor({ container, pdfEngine, annotationsManager, formEngine, onPageChange }) {
+  constructor({ container, pdfEngine, annotationsManager, formEngine, onPageChange, onScaleChange }) {
     this.container = container;
     this.pdfEngine = pdfEngine;
     this.annotationsManager = annotationsManager;
     this.formEngine = formEngine;
     this.onPageChange = onPageChange;
+    this.onScaleChange = onScaleChange;
 
     this.scale = 1.0;
     this.layoutMode = 'continuous'; // continuous, single, two-page
@@ -49,6 +50,17 @@ export class CanvasView {
       this.detectCurrentPage();
       this.renderVisiblePages();
     });
+
+    // Ctrl + Mouse Wheel Zoom
+    this.scrollContainer.addEventListener('wheel', (e) => {
+      if (e.ctrlKey) {
+        e.preventDefault();
+        const delta = e.deltaY > 0 ? -0.15 : 0.15;
+        const newScale = Math.max(0.4, Math.min(3.0, (this.scale || 1.0) + delta));
+        this.setScale(newScale);
+        if (this.onScaleChange) this.onScaleChange(newScale);
+      }
+    }, { passive: false });
 
     // Panning with Hand tool
     this.scrollContainer.addEventListener('mousedown', (e) => {
