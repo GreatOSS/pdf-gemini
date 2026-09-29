@@ -1,0 +1,38 @@
+{
+  "name": "folioflux",
+  "version": "1.0.0",
+  "description": "The modern, lightning-fast open-source PDF viewer and editor with a flawless UX.",
+  "type": "module",
+  "main": "dist/index.html",
+  "bin": {
+    "folioflux": "./bin/folioflux.js"
+  },
+  "scripts": {
+    "postinstall": "node scripts/copy-assets.js",
+    "prebuild": "node scripts/copy-assets.js",
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "start": "node bin/folioflux.js",
+    "test": "node --test tests/*.test.js"
+  },
+  "keywords": [
+    "pdf",
+    "pdf-viewer",
+    "pdf-editor",
+    "folioflux",
+    "annotations",
+    "forms",
+    "digital-signatures",
+    "page-manager"
+  ],
+  "author": "FolioFlux Contributors",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "pdf-lib": "^1.17.1",
+    "pdfjs-dist": "^4.10.38"
+  },
+  "devDependencies": {
+    "vite": "^6.2.0"
+  }
+}

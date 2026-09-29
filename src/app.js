@@ -1,0 +1,392 @@
+/**
+ * FolioFlux Main Application Controller
+ * Orchestrates PDF engine, viewports, annotations, modals, and user interactions.
+ */
+
+import { PDFEngine } from './core/pdf-engine.js';
+import { AnnotationsManager } from './core/annotations-manager.js';
+import { SearchEngine } from './core/search-engine.js';
+import { FormEngine } from './core/form-engine.js';
+import { PDFExporter } from './core/pdf-exporter.js';
+import { createTourSamplePDF, createContractSamplePDF } from './core/samples.js';
+
+import { Toolbar } from './ui/toolbar.js';
+import { Sidebar } from './ui/sidebar.js';
+import { CanvasView } from './ui/canvas-view.js';
+import { SearchBar } from './ui/search-bar.js';
+import { SignatureModal } from './ui/signature-modal.js';
+import { PageOrganizerModal } from './ui/page-organizer.js';
+import { PropertiesModal } from './ui/properties-dialog.js';
+import { ShortcutsModal } from './ui/shortcuts-dialog.js';
+import { TTSController } from './ui/tts-controller.js';
+
+export class FolioFluxApp {
+  constructor() {
+    this.pdfEngine = new PDFEngine();
+    this.annotationsManager = new AnnotationsManager();
+    this.searchEngine = new SearchEngine(this.pdfEngine);
+    this.formEngine = new FormEngine(this.pdfEngine);
+
+    this.isDarkMode = false;
+    this.isDocInvert = false;
+
+    this.initUI();
+    this.bindKeyboardShortcuts();
+    this.bindDropZone();
+
+    // Check for initial document provided by CLI or load welcome tour sample
+    this.initDocument();
+  }
+
+  async initDocument() {
+    try {
+      const resp = await fetch('/api/initial-document');
+      if (resp.ok) {
+        const buffer = await resp.arrayBuffer();
+        const disposition = resp.headers.get('Content-Disposition') || '';
+        const match = disposition.match(/filename="(.+)"/);
+        const fileName = match ? match[1] : 'document.pdf';
+        await this.loadDocumentBytes(new Uint8Array(buffer), fileName);
+        return;
+      }
+    } catch {}
+
+    // Fallback: auto-load welcome tour sample so the app is immediately alive and ready to use
+    await this.loadSampleTour();
+  }
+
+  initUI() {
+    const headerContainer = document.getElementById('header-mount');
+    const sidebarContainer = document.getElementById('sidebar-mount');
+    const canvasContainer = document.getElementById('canvas-mount');
+
+    // Toolbar
+    this.toolbar = new Toolbar({
+      container: headerContainer,
+      onAction: (action, data) => this.handleToolbarAction(action, data),
+      onToolChange: (tool, options) => {
+        this.canvasView.setTool(tool, options);
+        if (tool === 'signature' && !this.canvasView.currentSignatureData) {
+          this.signatureModal.open();
+        }
+      },
+    });
+
+    // Canvas View
+    this.canvasView = new CanvasView({
+      container: canvasContainer,
+      pdfEngine: this.pdfEngine,
+      annotationsManager: this.annotationsManager,
+      formEngine: this.formEngine,
+      onPageChange: (pageNum) => {
+        this.toolbar.setCurrentPage(pageNum);
+        this.sidebar.setActivePage(pageNum - 1);
+      },
+    });
+
+    // Sidebar
+    this.sidebar = new Sidebar({
+      container: sidebarContainer,
+      pdfEngine: this.pdfEngine,
+      annotationsManager: this.annotationsManager,
+      searchEngine: this.searchEngine,
+      onAction: (action, data) => this.handleSidebarAction(action, data),
+    });
+
+    // Floating Search Bar
+    this.searchBar = new SearchBar({
+      container: document.body,
+      searchEngine: this.searchEngine,
+      onJumpToMatch: (match) => {
+        this.canvasView.scrollToPage(match.pageIndex + 1);
+      },
+    });
+
+    // Modals
+    this.signatureModal = new SignatureModal({
+      onApply: (dataUrl) => {
+        this.canvasView.currentSignatureData = dataUrl;
+        this.showToast('Signature ready! Click anywhere on a page to stamp it.');
+      },
+    });
+
+    this.organizerModal = new PageOrganizerModal({
+      pdfEngine: this.pdfEngine,
+      onApply: async () => {
+        await this.canvasView.buildPages();
+        await this.sidebar.updateContent();
+        this.toolbar.setDocumentInfo({
+          numPages: this.pdfEngine.numPages,
+          currentPage: this.canvasView.currentPage,
+        });
+      },
+    });
+
+    this.propertiesModal = new PropertiesModal({ pdfEngine: this.pdfEngine });
+    this.shortcutsModal = new ShortcutsModal();
+    this.ttsController = new TTSController({
+      pdfEngine: this.pdfEngine,
+      getCurrentPage: () => this.canvasView.currentPage,
+    });
+  }
+
+  async handleToolbarAction(action, data) {
+    if (action === 'toggle-sidebar') {
+      this.sidebar.toggleCollapse();
+    } else if (action === 'open-signature-modal') {
+      this.signatureModal.open();
+    } else if (action === 'prev-page') {
+      const p = Math.max(1, this.canvasView.currentPage - 1);
+      this.canvasView.scrollToPage(p);
+    } else if (action === 'next-page') {
+      const p = Math.min(this.pdfEngine.numPages, this.canvasView.currentPage + 1);
+      this.canvasView.scrollToPage(p);
+    } else if (action === 'goto-page') {
+      const p = Math.max(1, Math.min(this.pdfEngine.numPages, data));
+      this.canvasView.scrollToPage(p);
+    } else if (action === 'zoom-in') {
+      const newScale = Math.min(3.0, (this.canvasView.scale || 1.0) + 0.25);
+      this.canvasView.setScale(newScale);
+      this.toolbar.setZoom(newScale);
+    } else if (action === 'zoom-out') {
+      const newScale = Math.max(0.4, (this.canvasView.scale || 1.0) - 0.25);
+      this.canvasView.setScale(newScale);
+      this.toolbar.setZoom(newScale);
+    } else if (action === 'set-zoom') {
+      this.canvasView.setScale(data);
+    } else if (action === 'set-layout-mode') {
+      this.canvasView.setLayoutMode(data);
+    } else if (action === 'undo') {
+      this.annotationsManager.undo();
+    } else if (action === 'redo') {
+      this.annotationsManager.redo();
+    } else if (action === 'toggle-search') {
+      this.searchBar.toggle();
+    } else if (action === 'organize-pages') {
+      this.organizerModal.open();
+    } else if (action === 'toggle-tts') {
+      this.ttsController.toggle();
+    } else if (action === 'toggle-dark') {
+      this.toggleReadingDark();
+    } else if (action === 'open-file') {
+      this.loadFile(data);
+    } else if (action === 'save-pdf') {
+      this.savePDF();
+    } else if (action === 'show-options-menu') {
+      this.showOptionsMenu();
+    } else if (action === 'rename-doc') {
+      if (this.pdfEngine.metadata) {
+        this.pdfEngine.metadata.title = data;
+      }
+    }
+  }
+
+  async handleSidebarAction(action, data) {
+    if (action === 'goto-page') {
+      this.canvasView.scrollToPage(data);
+    } else if (action === 'rotate-page') {
+      this.pdfEngine.rotatePage(data.pageIndex, data.degrees);
+      await this.canvasView.renderPage(data.pageIndex);
+      this.sidebar.updateContent();
+    } else if (action === 'delete-page') {
+      if (this.pdfEngine.numPages <= 1) {
+        alert('Cannot delete the only page in the document.');
+        return;
+      }
+      this.pdfEngine.deletePage(data);
+      await this.canvasView.buildPages();
+      this.sidebar.updateContent();
+      this.toolbar.setDocumentInfo({
+        numPages: this.pdfEngine.numPages,
+        currentPage: Math.min(this.canvasView.currentPage, this.pdfEngine.numPages),
+      });
+    } else if (action === 'reorder-page') {
+      this.pdfEngine.reorderPage(data.sourceIndex, data.targetIndex);
+      await this.canvasView.buildPages();
+      this.sidebar.updateContent();
+    }
+  }
+
+  async loadDocumentBytes(bytes, fileName = 'document.pdf') {
+    this.hideWelcome();
+    this.annotationsManager.clear();
+
+    const meta = await this.pdfEngine.loadDocument(bytes, fileName);
+    await this.formEngine.loadFields();
+
+    this.toolbar.setDocumentInfo({
+      title: meta.title || fileName,
+      numPages: this.pdfEngine.numPages,
+      currentPage: 1,
+    });
+
+    await this.canvasView.buildPages();
+    await this.sidebar.updateContent();
+
+    this.showToast(`Loaded ${fileName} (${this.pdfEngine.numPages} pages)`);
+  }
+
+  async loadFile(file) {
+    if (!file) return;
+    const buffer = await file.arrayBuffer();
+    await this.loadDocumentBytes(new Uint8Array(buffer), file.name);
+  }
+
+  async loadSampleTour() {
+    const bytes = await createTourSamplePDF();
+    await this.loadDocumentBytes(bytes, 'FolioFlux-Quickstart-Guide.pdf');
+  }
+
+  async loadSampleContract() {
+    const bytes = await createContractSamplePDF();
+    await this.loadDocumentBytes(bytes, 'Mutual-NDA-Interactive-Form.pdf');
+  }
+
+  async savePDF() {
+    try {
+      this.showToast('Compiling and saving PDF...');
+      const outputBytes = await PDFExporter.exportDocument({
+        pdfEngine: this.pdfEngine,
+        annotationsManager: this.annotationsManager,
+        formEngine: this.formEngine,
+        flattenForms: true,
+      });
+
+      const blob = new Blob([outputBytes], { type: 'application/pdf' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      const title = (this.pdfEngine.metadata?.title || 'document').replace(/[^a-zA-Z0-9_-]/g, '_');
+      a.download = `${title}-edited.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      this.showToast('PDF successfully saved & downloaded!');
+    } catch (err) {
+      console.error('Failed to save PDF:', err);
+      alert('Error saving PDF: ' + err.message);
+    }
+  }
+
+  printDocument() {
+    window.print();
+  }
+
+  toggleReadingDark() {
+    this.isDocInvert = !this.isDocInvert;
+    document.body.classList.toggle('doc-invert', this.isDocInvert);
+    document.body.setAttribute('data-theme', this.isDocInvert ? 'dark' : 'light');
+    this.showToast(this.isDocInvert ? 'Dark Reading Mode ON' : 'Standard Reading Mode ON');
+  }
+
+  showOptionsMenu() {
+    const choice = prompt('Options:\n1: Document Properties\n2: Keyboard Shortcuts\n3: Load Interactive NDA Form\n4: Load Quickstart Tour\n5: Print Document\n\nEnter number (1-5):', '1');
+    if (choice === '1') this.propertiesModal.open();
+    else if (choice === '2') this.shortcutsModal.open();
+    else if (choice === '3') this.loadSampleContract();
+    else if (choice === '4') this.loadSampleTour();
+    else if (choice === '5') this.printDocument();
+  }
+
+  bindKeyboardShortcuts() {
+    window.addEventListener('keydown', (e) => {
+      // Don't capture when typing in inputs
+      if (['INPUT', 'TEXTAREA'].includes(e.target.tagName) || e.target.isContentEditable) {
+        return;
+      }
+
+      if (e.ctrlKey || e.metaKey) {
+        if (e.key === 'o' || e.key === 'O') {
+          e.preventDefault();
+          document.getElementById('file-input').click();
+        } else if (e.key === 's' || e.key === 'S') {
+          e.preventDefault();
+          this.savePDF();
+        } else if (e.key === 'p' || e.key === 'P') {
+          e.preventDefault();
+          this.printDocument();
+        } else if (e.key === 'f' || e.key === 'F') {
+          e.preventDefault();
+          this.searchBar.open();
+        } else if (e.key === 'z' || e.key === 'Z') {
+          e.preventDefault();
+          if (e.shiftKey) this.annotationsManager.redo();
+          else this.annotationsManager.undo();
+        } else if (e.key === 'y' || e.key === 'Y') {
+          e.preventDefault();
+          this.annotationsManager.redo();
+        }
+      } else {
+        if (e.key === '+' || e.key === '=') {
+          this.handleToolbarAction('zoom-in');
+        } else if (e.key === '-') {
+          this.handleToolbarAction('zoom-out');
+        } else if (e.key === '0') {
+          this.canvasView.setScale('fit-width');
+        } else if (e.key === 'PageDown' || e.key === ']') {
+          this.handleToolbarAction('next-page');
+        } else if (e.key === 'PageUp' || e.key === '[') {
+          this.handleToolbarAction('prev-page');
+        } else if (e.key === 'd' || e.key === 'D') {
+          this.toggleReadingDark();
+        } else if (e.key === 'b' || e.key === 'B') {
+          this.sidebar.toggleCollapse();
+        } else if (e.key === 'h' || e.key === 'H') {
+          this.toolbar.setActiveTool('hand');
+        } else if (e.key === 'v' || e.key === 'V') {
+          this.toolbar.setActiveTool('select');
+        } else if (e.key === '?') {
+          this.shortcutsModal.open();
+        }
+      }
+    });
+  }
+
+  bindDropZone() {
+    window.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'copy';
+    });
+
+    window.addEventListener('drop', (e) => {
+      e.preventDefault();
+      const file = e.dataTransfer.files?.[0];
+      if (file && (file.type === 'application/pdf' || file.name.endsWith('.pdf'))) {
+        this.loadFile(file);
+      }
+    });
+  }
+
+  showToast(message) {
+    let container = document.getElementById('toast-container');
+    if (!container) {
+      container = document.createElement('div');
+      container.id = 'toast-container';
+      container.className = 'toast-container';
+      document.body.appendChild(container);
+    }
+
+    const toast = document.createElement('div');
+    toast.className = 'toast';
+    toast.textContent = message;
+    container.appendChild(toast);
+
+    setTimeout(() => {
+      toast.style.opacity = '0';
+      toast.style.transition = 'opacity 0.3s ease';
+      setTimeout(() => toast.remove(), 300);
+    }, 3000);
+  }
+
+  hideWelcome() {
+    const welcome = document.getElementById('welcome-screen');
+    if (welcome) welcome.style.display = 'none';
+  }
+}
+
+// Instantiate on DOM load
+window.addEventListener('DOMContentLoaded', () => {
+  window.app = new FolioFluxApp();
+});

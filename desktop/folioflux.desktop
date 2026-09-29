@@ -1,0 +1,12 @@
+[Desktop Entry]
+Name=FolioFlux
+GenericName=PDF Viewer & Editor
+Comment=Modern, lightning-fast open-source PDF viewer and editor
+Exec=folioflux %U
+Terminal=false
+Type=Application
+Icon=folioflux
+Categories=Office;Viewer;Graphics;
+MimeType=application/pdf;application/x-pdf;image/pdf;
+StartupNotify=true
+Keywords=pdf;viewer;editor;annotate;sign;stamp;forms;

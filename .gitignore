@@ -1,0 +1,7 @@
+node_modules/
+dist/
+public/pdf.worker.min.mjs
+public/cmaps/
+public/standard_fonts/
+.DS_Store
+*.log

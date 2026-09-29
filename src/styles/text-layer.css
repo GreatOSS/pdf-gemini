@@ -1,0 +1,42 @@
+/* Text Layer styles for PDF text selection and search */
+.textLayer {
+  position: absolute;
+  text-align: initial;
+  inset: 0;
+  overflow: hidden;
+  opacity: 1;
+  line-height: 1;
+  text-size-adjust: none;
+  forced-color-adjust: none;
+  transform-origin: 0 0;
+  z-index: 2;
+}
+
+.textLayer span,
+.textLayer br {
+  color: transparent;
+  position: absolute;
+  white-space: pre;
+  cursor: text;
+  transform-origin: 0% 0%;
+}
+
+/* Selected text background */
+.textLayer ::selection {
+  background: rgba(99, 102, 241, 0.35);
+  color: transparent;
+}
+
+.textLayer br::selection {
+  background: transparent;
+}
+
+.textLayer .search-highlight {
+  background-color: rgba(250, 204, 21, 0.6);
+  border-radius: 2px;
+}
+
+.textLayer .search-highlight.active-match {
+  background-color: rgba(249, 115, 22, 0.85);
+  box-shadow: 0 0 0 1px #ea580c;
+}

@@ -1,0 +1,630 @@
+/**
+ * FolioFlux Canvas View Manager
+ * Handles multi-page rendering, zooming, panning, text layers, and interactive annotation overlays.
+ */
+
+export class CanvasView {
+  constructor({ container, pdfEngine, annotationsManager, formEngine, onPageChange }) {
+    this.container = container;
+    this.pdfEngine = pdfEngine;
+    this.annotationsManager = annotationsManager;
+    this.formEngine = formEngine;
+    this.onPageChange = onPageChange;
+
+    this.scale = 1.0;
+    this.layoutMode = 'continuous'; // continuous, single, two-page
+    this.currentPage = 1;
+    this.activeTool = 'select';
+    this.toolOptions = {};
+    this.renderedPages = new Set();
+    this.pageWrappers = [];
+
+    // Interaction state for active drawing
+    this.isDrawing = false;
+    this.drawingPoints = [];
+    this.startCoord = null;
+    this.activeSvgTemp = null;
+    this.isPanning = false;
+    this.panStart = { x: 0, y: 0, scrollLeft: 0, scrollTop: 0 };
+
+    this.renderContainer();
+    this.bindGlobalEvents();
+  }
+
+  renderContainer() {
+    this.container.innerHTML = `
+      <div class="canvas-container" id="canvas-scroll-container">
+        <div class="pages-view-wrapper" id="pages-view-wrapper">
+          <!-- Page canvas wrappers injected here -->
+        </div>
+      </div>
+    `;
+    this.scrollContainer = this.container.querySelector('#canvas-scroll-container');
+    this.wrapper = this.container.querySelector('#pages-view-wrapper');
+  }
+
+  bindGlobalEvents() {
+    // Scroll listener for detecting current visible page
+    this.scrollContainer.addEventListener('scroll', () => {
+      this.detectCurrentPage();
+      this.renderVisiblePages();
+    });
+
+    // Panning with Hand tool
+    this.scrollContainer.addEventListener('mousedown', (e) => {
+      if (this.activeTool === 'hand' || e.button === 1) { // Hand tool or middle click
+        this.isPanning = true;
+        this.scrollContainer.classList.add('panning');
+        this.panStart = {
+          x: e.clientX,
+          y: e.clientY,
+          scrollLeft: this.scrollContainer.scrollLeft,
+          scrollTop: this.scrollContainer.scrollTop,
+        };
+        e.preventDefault();
+      }
+    });
+
+    window.addEventListener('mousemove', (e) => {
+      if (this.isPanning) {
+        const dx = e.clientX - this.panStart.x;
+        const dy = e.clientY - this.panStart.y;
+        this.scrollContainer.scrollLeft = this.panStart.scrollLeft - dx;
+        this.scrollContainer.scrollTop = this.panStart.scrollTop - dy;
+      }
+    });
+
+    window.addEventListener('mouseup', () => {
+      if (this.isPanning) {
+        this.isPanning = false;
+        this.scrollContainer.classList.remove('panning');
+      }
+    });
+
+    // Listen to annotation changes to update overlay
+    if (this.annotationsManager) {
+      this.annotationsManager.subscribe((event, data) => {
+        if (event === 'change' && data) {
+          this.renderAnnotationsForPage(data.pageIndex);
+        } else if (event === 'clear') {
+          this.renderAllAnnotations();
+        }
+      });
+    }
+  }
+
+  async buildPages() {
+    this.wrapper.innerHTML = '';
+    this.renderedPages.clear();
+    this.pageWrappers = [];
+
+    if (!this.pdfEngine || this.pdfEngine.numPages === 0) return;
+
+    this.wrapper.className = `pages-view-wrapper ${this.layoutMode === 'two-page' ? 'two-page-layout' : ''}`;
+
+    for (let i = 0; i < this.pdfEngine.numPages; i++) {
+      const pageWrap = document.createElement('div');
+      pageWrap.className = 'page-canvas-wrapper';
+      pageWrap.dataset.pageIndex = i;
+
+      // Single page mode visibility
+      if (this.layoutMode === 'single' && i !== this.currentPage - 1) {
+        pageWrap.style.display = 'none';
+      }
+
+      // Placeholder sizing until rendered
+      pageWrap.style.width = `${Math.floor(612 * this.scale)}px`;
+      pageWrap.style.height = `${Math.floor(792 * this.scale)}px`;
+
+      const canvas = document.createElement('canvas');
+      canvas.className = 'page-pdf-canvas';
+
+      const textLayer = document.createElement('div');
+      textLayer.className = 'textLayer';
+
+      const annotationOverlay = document.createElement('div');
+      annotationOverlay.className = 'annotation-overlay-layer interactive';
+
+      const svgOverlay = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svgOverlay.setAttribute('class', 'annotation-svg-canvas');
+
+      annotationOverlay.appendChild(svgOverlay);
+      pageWrap.appendChild(canvas);
+      pageWrap.appendChild(textLayer);
+      pageWrap.appendChild(annotationOverlay);
+
+      this.wrapper.appendChild(pageWrap);
+      this.pageWrappers.push(pageWrap);
+
+      // Attach interaction handlers to page
+      this.bindPageInteractions(i, pageWrap, svgOverlay, annotationOverlay);
+    }
+
+    await this.renderVisiblePages();
+    this.renderAllAnnotations();
+  }
+
+  bindPageInteractions(pageIndex, pageWrap, svgOverlay, overlayLayer) {
+    const getPagePoint = (e) => {
+      const rect = pageWrap.getBoundingClientRect();
+      const clientX = e.clientX;
+      const clientY = e.clientY;
+      const x = (clientX - rect.left) / this.scale;
+      const y = (clientY - rect.top) / this.scale;
+      return { x: Math.max(0, x), y: Math.max(0, y) };
+    };
+
+    pageWrap.addEventListener('mousedown', (e) => {
+      if (e.button !== 0) return;
+      if (this.activeTool === 'select' || this.activeTool === 'hand') return;
+
+      const pt = getPagePoint(e);
+      this.isDrawing = true;
+      this.startCoord = pt;
+
+      if (this.activeTool === 'pen') {
+        this.drawingPoints = [pt];
+        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        path.setAttribute('stroke', this.toolOptions.color || '#4f46e5');
+        path.setAttribute('stroke-width', (this.toolOptions.strokeWidth || 3) * this.scale);
+        path.setAttribute('stroke-linecap', 'round');
+        path.setAttribute('stroke-linejoin', 'round');
+        path.setAttribute('fill', 'none');
+        path.setAttribute('d', `M ${pt.x * this.scale} ${pt.y * this.scale}`);
+        svgOverlay.appendChild(path);
+        this.activeSvgTemp = path;
+      } else if (this.activeTool === 'rect') {
+        const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        rect.setAttribute('stroke', this.toolOptions.color || '#ef4444');
+        rect.setAttribute('stroke-width', (this.toolOptions.strokeWidth || 2) * this.scale);
+        rect.setAttribute('fill', 'rgba(239, 68, 68, 0.1)');
+        svgOverlay.appendChild(rect);
+        this.activeSvgTemp = rect;
+      } else if (this.activeTool === 'circle') {
+        const ellipse = document.createElementNS('http://www.w3.org/2000/svg', 'ellipse');
+        ellipse.setAttribute('stroke', this.toolOptions.color || '#ef4444');
+        ellipse.setAttribute('stroke-width', (this.toolOptions.strokeWidth || 2) * this.scale);
+        ellipse.setAttribute('fill', 'rgba(239, 68, 68, 0.1)');
+        svgOverlay.appendChild(ellipse);
+        this.activeSvgTemp = ellipse;
+      } else if (this.activeTool === 'arrow') {
+        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        line.setAttribute('stroke', this.toolOptions.color || '#ef4444');
+        line.setAttribute('stroke-width', (this.toolOptions.strokeWidth || 2) * this.scale);
+        svgOverlay.appendChild(line);
+        this.activeSvgTemp = line;
+      } else if (this.activeTool === 'text') {
+        this.createTextAnnotation(pageIndex, pt);
+        this.isDrawing = false;
+      } else if (this.activeTool === 'note') {
+        this.createNoteAnnotation(pageIndex, pt);
+        this.isDrawing = false;
+      } else if (this.activeTool === 'stamp') {
+        this.createStampAnnotation(pageIndex, pt);
+        this.isDrawing = false;
+      } else if (this.activeTool === 'signature') {
+        this.createSignatureAnnotation(pageIndex, pt);
+        this.isDrawing = false;
+      } else if (this.activeTool === 'redact') {
+        const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        rect.setAttribute('stroke', '#000000');
+        rect.setAttribute('fill', 'rgba(0, 0, 0, 0.8)');
+        svgOverlay.appendChild(rect);
+        this.activeSvgTemp = rect;
+      }
+    });
+
+    window.addEventListener('mousemove', (e) => {
+      if (!this.isDrawing || !this.startCoord) return;
+      const pt = getPagePoint(e);
+
+      if (this.activeTool === 'pen' && this.activeSvgTemp) {
+        this.drawingPoints.push(pt);
+        let d = `M ${this.drawingPoints[0].x * this.scale} ${this.drawingPoints[0].y * this.scale}`;
+        for (let i = 1; i < this.drawingPoints.length; i++) {
+          d += ` L ${this.drawingPoints[i].x * this.scale} ${this.drawingPoints[i].y * this.scale}`;
+        }
+        this.activeSvgTemp.setAttribute('d', d);
+      } else if (this.activeTool === 'rect' || this.activeTool === 'redact') {
+        if (this.activeSvgTemp) {
+          const x = Math.min(this.startCoord.x, pt.x) * this.scale;
+          const y = Math.min(this.startCoord.y, pt.y) * this.scale;
+          const w = Math.abs(pt.x - this.startCoord.x) * this.scale;
+          const h = Math.abs(pt.y - this.startCoord.y) * this.scale;
+          this.activeSvgTemp.setAttribute('x', x);
+          this.activeSvgTemp.setAttribute('y', y);
+          this.activeSvgTemp.setAttribute('width', w);
+          this.activeSvgTemp.setAttribute('height', h);
+        }
+      } else if (this.activeTool === 'circle' && this.activeSvgTemp) {
+        const cx = ((this.startCoord.x + pt.x) / 2) * this.scale;
+        const cy = ((this.startCoord.y + pt.y) / 2) * this.scale;
+        const rx = (Math.abs(pt.x - this.startCoord.x) / 2) * this.scale;
+        const ry = (Math.abs(pt.y - this.startCoord.y) / 2) * this.scale;
+        this.activeSvgTemp.setAttribute('cx', cx);
+        this.activeSvgTemp.setAttribute('cy', cy);
+        this.activeSvgTemp.setAttribute('rx', rx);
+        this.activeSvgTemp.setAttribute('ry', ry);
+      } else if (this.activeTool === 'arrow' && this.activeSvgTemp) {
+        this.activeSvgTemp.setAttribute('x1', this.startCoord.x * this.scale);
+        this.activeSvgTemp.setAttribute('y1', this.startCoord.y * this.scale);
+        this.activeSvgTemp.setAttribute('x2', pt.x * this.scale);
+        this.activeSvgTemp.setAttribute('y2', pt.y * this.scale);
+      }
+    });
+
+    window.addEventListener('mouseup', (e) => {
+      if (!this.isDrawing) return;
+      this.isDrawing = false;
+      const pt = getPagePoint(e);
+
+      if (this.activeTool === 'pen' && this.drawingPoints.length > 1) {
+        this.annotationsManager.addAnnotation(pageIndex, {
+          type: 'ink',
+          color: this.toolOptions.color || '#4f46e5',
+          width: this.toolOptions.strokeWidth || 3,
+          points: this.drawingPoints,
+        });
+      } else if (this.activeTool === 'rect') {
+        const x = Math.min(this.startCoord.x, pt.x);
+        const y = Math.min(this.startCoord.y, pt.y);
+        const width = Math.abs(pt.x - this.startCoord.x);
+        const height = Math.abs(pt.y - this.startCoord.y);
+        if (width > 5 && height > 5) {
+          this.annotationsManager.addAnnotation(pageIndex, {
+            type: 'rect',
+            x, y, width, height,
+            strokeColor: this.toolOptions.color || '#ef4444',
+            strokeWidth: this.toolOptions.strokeWidth || 2,
+            fillColor: 'transparent',
+          });
+        }
+      } else if (this.activeTool === 'redact') {
+        const x = Math.min(this.startCoord.x, pt.x);
+        const y = Math.min(this.startCoord.y, pt.y);
+        const width = Math.abs(pt.x - this.startCoord.x);
+        const height = Math.abs(pt.y - this.startCoord.y);
+        if (width > 5 && height > 5) {
+          this.annotationsManager.addAnnotation(pageIndex, {
+            type: 'redaction',
+            x, y, width, height,
+            applied: true,
+            textOverlay: 'REDACTED',
+          });
+        }
+      } else if (this.activeTool === 'circle') {
+        const x = Math.min(this.startCoord.x, pt.x);
+        const y = Math.min(this.startCoord.y, pt.y);
+        const width = Math.abs(pt.x - this.startCoord.x);
+        const height = Math.abs(pt.y - this.startCoord.y);
+        if (width > 5 && height > 5) {
+          this.annotationsManager.addAnnotation(pageIndex, {
+            type: 'circle',
+            x: (this.startCoord.x + pt.x) / 2,
+            y: (this.startCoord.y + pt.y) / 2,
+            radiusX: width / 2,
+            radiusY: height / 2,
+            strokeColor: this.toolOptions.color || '#ef4444',
+            strokeWidth: this.toolOptions.strokeWidth || 2,
+          });
+        }
+      } else if (this.activeTool === 'arrow') {
+        this.annotationsManager.addAnnotation(pageIndex, {
+          type: 'line',
+          startX: this.startCoord.x,
+          startY: this.startCoord.y,
+          endX: pt.x,
+          endY: pt.y,
+          strokeColor: this.toolOptions.color || '#ef4444',
+          strokeWidth: this.toolOptions.strokeWidth || 2,
+        });
+      }
+
+      if (this.activeSvgTemp && this.activeSvgTemp.parentNode) {
+        this.activeSvgTemp.parentNode.removeChild(this.activeSvgTemp);
+      }
+      this.activeSvgTemp = null;
+      this.drawingPoints = [];
+      this.startCoord = null;
+    });
+  }
+
+  createTextAnnotation(pageIndex, pt) {
+    const text = prompt('Enter text for document:', 'Annotation Text');
+    if (!text) return;
+
+    this.annotationsManager.addAnnotation(pageIndex, {
+      type: 'text',
+      x: pt.x,
+      y: pt.y,
+      text,
+      fontSize: this.toolOptions.fontSize || 14,
+      color: this.toolOptions.color || '#0f172a',
+    });
+  }
+
+  createNoteAnnotation(pageIndex, pt) {
+    const text = prompt('Enter note / comment:', 'Note comment');
+    if (!text) return;
+
+    this.annotationsManager.addAnnotation(pageIndex, {
+      type: 'note',
+      x: pt.x,
+      y: pt.y,
+      text,
+      color: '#facc15',
+    });
+  }
+
+  createStampAnnotation(pageIndex, pt) {
+    const stampType = this.toolOptions.stampType || 'APPROVED';
+    this.annotationsManager.addAnnotation(pageIndex, {
+      type: 'stamp',
+      stampType,
+      x: pt.x,
+      y: pt.y,
+      width: 140,
+      height: 44,
+    });
+  }
+
+  createSignatureAnnotation(pageIndex, pt) {
+    if (this.currentSignatureData) {
+      this.annotationsManager.addAnnotation(pageIndex, {
+        type: 'signature',
+        x: pt.x,
+        y: pt.y,
+        width: 160,
+        height: 60,
+        dataUrl: this.currentSignatureData,
+      });
+    } else {
+      alert('Please create or draw a signature first via the Signature modal.');
+    }
+  }
+
+  async renderVisiblePages() {
+    if (!this.pdfEngine || this.pageWrappers.length === 0) return;
+
+    const containerRect = this.scrollContainer.getBoundingClientRect();
+    const margin = 400; // preload margin
+
+    for (let i = 0; i < this.pageWrappers.length; i++) {
+      if (this.layoutMode === 'single' && i !== this.currentPage - 1) continue;
+
+      const pageWrap = this.pageWrappers[i];
+      const rect = pageWrap.getBoundingClientRect();
+
+      const isVisible = rect.top < containerRect.bottom + margin && rect.bottom > containerRect.top - margin;
+      if (isVisible && !this.renderedPages.has(i)) {
+        await this.renderPage(i);
+      }
+    }
+  }
+
+  async renderPage(displayIndex) {
+    const pageWrap = this.pageWrappers[displayIndex];
+    if (!pageWrap) return;
+
+    const canvas = pageWrap.querySelector('.page-pdf-canvas');
+    const textLayer = pageWrap.querySelector('.textLayer');
+
+    try {
+      const { viewport } = await this.pdfEngine.renderPageToCanvas(displayIndex, canvas, this.scale);
+      this.renderedPages.add(displayIndex);
+
+      pageWrap.style.width = `${Math.floor(viewport.width)}px`;
+      pageWrap.style.height = `${Math.floor(viewport.height)}px`;
+
+      // Render Text Layer
+      textLayer.innerHTML = '';
+      textLayer.style.width = `${Math.floor(viewport.width)}px`;
+      textLayer.style.height = `${Math.floor(viewport.height)}px`;
+
+      const textContent = await this.pdfEngine.getTextContent(displayIndex);
+      this.renderTextItems(textLayer, textContent, viewport);
+    } catch {
+      // Ignore if rendering cancelled
+    }
+  }
+
+  renderTextItems(container, textContent, viewport) {
+    for (const item of textContent.items) {
+      if (!item.str || item.str.trim() === '') continue;
+
+      const tx = pdfjsLib.Util.transform(viewport.transform, item.transform);
+      const fontHeight = Math.sqrt(tx[2] * tx[2] + tx[3] * tx[3]);
+
+      const span = document.createElement('span');
+      span.textContent = item.str;
+      span.style.left = `${tx[4]}px`;
+      span.style.top = `${tx[5] - fontHeight}px`;
+      span.style.fontSize = `${fontHeight}px`;
+      span.style.fontFamily = item.fontName || 'sans-serif';
+
+      container.appendChild(span);
+    }
+  }
+
+  renderAnnotationsForPage(pageIndex) {
+    const pageWrap = this.pageWrappers[pageIndex];
+    if (!pageWrap) return;
+
+    const svgOverlay = pageWrap.querySelector('.annotation-svg-canvas');
+    const overlayLayer = pageWrap.querySelector('.annotation-overlay-layer');
+
+    // Clean previous non-svg annotations
+    overlayLayer.querySelectorAll('.canvas-textbox, .canvas-sticky-note, .canvas-stamp, .canvas-signature, .canvas-redaction').forEach(el => el.remove());
+    svgOverlay.innerHTML = '';
+
+    const list = this.annotationsManager.getAnnotationsForPage(pageIndex);
+
+    for (const ann of list) {
+      if (ann.type === 'ink') {
+        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        let d = `M ${ann.points[0].x * this.scale} ${ann.points[0].y * this.scale}`;
+        for (let i = 1; i < ann.points.length; i++) {
+          d += ` L ${ann.points[i].x * this.scale} ${ann.points[i].y * this.scale}`;
+        }
+        path.setAttribute('d', d);
+        path.setAttribute('stroke', ann.color || '#4f46e5');
+        path.setAttribute('stroke-width', (ann.width || 3) * this.scale);
+        path.setAttribute('stroke-linecap', 'round');
+        path.setAttribute('stroke-linejoin', 'round');
+        path.setAttribute('fill', 'none');
+        svgOverlay.appendChild(path);
+      } else if (ann.type === 'rect') {
+        const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        rect.setAttribute('x', ann.x * this.scale);
+        rect.setAttribute('y', ann.y * this.scale);
+        rect.setAttribute('width', ann.width * this.scale);
+        rect.setAttribute('height', ann.height * this.scale);
+        rect.setAttribute('stroke', ann.strokeColor || '#ef4444');
+        rect.setAttribute('stroke-width', (ann.strokeWidth || 2) * this.scale);
+        rect.setAttribute('fill', ann.fillColor || 'transparent');
+        svgOverlay.appendChild(rect);
+      } else if (ann.type === 'circle') {
+        const ellipse = document.createElementNS('http://www.w3.org/2000/svg', 'ellipse');
+        ellipse.setAttribute('cx', ann.x * this.scale);
+        ellipse.setAttribute('cy', ann.y * this.scale);
+        ellipse.setAttribute('rx', ann.radiusX * this.scale);
+        ellipse.setAttribute('ry', ann.radiusY * this.scale);
+        ellipse.setAttribute('stroke', ann.strokeColor || '#ef4444');
+        ellipse.setAttribute('stroke-width', (ann.strokeWidth || 2) * this.scale);
+        ellipse.setAttribute('fill', 'transparent');
+        svgOverlay.appendChild(ellipse);
+      } else if (ann.type === 'line') {
+        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        line.setAttribute('x1', ann.startX * this.scale);
+        line.setAttribute('y1', ann.startY * this.scale);
+        line.setAttribute('x2', ann.endX * this.scale);
+        line.setAttribute('y2', ann.endY * this.scale);
+        line.setAttribute('stroke', ann.strokeColor || '#ef4444');
+        line.setAttribute('stroke-width', (ann.strokeWidth || 2) * this.scale);
+        svgOverlay.appendChild(line);
+      } else if (ann.type === 'text') {
+        const box = document.createElement('div');
+        box.className = 'canvas-textbox';
+        box.style.left = `${ann.x * this.scale}px`;
+        box.style.top = `${ann.y * this.scale}px`;
+        box.style.fontSize = `${(ann.fontSize || 14) * this.scale}px`;
+        box.style.color = ann.color || '#0f172a';
+        box.innerHTML = `<div class="canvas-textbox-content" contenteditable="true">${ann.text}</div>`;
+        overlayLayer.appendChild(box);
+      } else if (ann.type === 'note') {
+        const note = document.createElement('div');
+        note.className = 'canvas-sticky-note';
+        note.style.left = `${ann.x * this.scale}px`;
+        note.style.top = `${ann.y * this.scale}px`;
+        note.title = ann.text;
+        note.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15.5 3H5a2 2 0 0 0-2 2v14c0 1.1.9 2 2 2h14a2 2 0 0 0 2-2V8.5L15.5 3Z"></path></svg>`;
+        note.addEventListener('click', () => {
+          alert(`Sticky Note:\n\n${ann.text}`);
+        });
+        overlayLayer.appendChild(note);
+      } else if (ann.type === 'stamp') {
+        const stamp = document.createElement('div');
+        const stType = (ann.stampType || 'APPROVED').toLowerCase();
+        stamp.className = `canvas-stamp ${stType}`;
+        stamp.style.left = `${ann.x * this.scale}px`;
+        stamp.style.top = `${ann.y * this.scale}px`;
+        stamp.style.fontSize = `${16 * this.scale}px`;
+        stamp.textContent = (ann.stampType || 'APPROVED').toUpperCase();
+        overlayLayer.appendChild(stamp);
+      } else if (ann.type === 'signature' && ann.dataUrl) {
+        const sig = document.createElement('div');
+        sig.className = 'canvas-signature';
+        sig.style.left = `${ann.x * this.scale}px`;
+        sig.style.top = `${ann.y * this.scale}px`;
+        sig.style.width = `${(ann.width || 160) * this.scale}px`;
+        sig.innerHTML = `<img src="${ann.dataUrl}" alt="Signature" />`;
+        overlayLayer.appendChild(sig);
+      } else if (ann.type === 'redaction') {
+        const red = document.createElement('div');
+        red.className = 'canvas-redaction';
+        red.style.left = `${ann.x * this.scale}px`;
+        red.style.top = `${ann.y * this.scale}px`;
+        red.style.width = `${ann.width * this.scale}px`;
+        red.style.height = `${ann.height * this.scale}px`;
+        red.textContent = 'REDACTED';
+        overlayLayer.appendChild(red);
+      }
+    }
+  }
+
+  renderAllAnnotations() {
+    for (let i = 0; i < this.pageWrappers.length; i++) {
+      this.renderAnnotationsForPage(i);
+    }
+  }
+
+  detectCurrentPage() {
+    const containerTop = this.scrollContainer.scrollTop;
+    let closestPage = 1;
+    let minDiff = Infinity;
+
+    for (let i = 0; i < this.pageWrappers.length; i++) {
+      const top = this.pageWrappers[i].offsetTop;
+      const diff = Math.abs(top - containerTop);
+      if (diff < minDiff) {
+        minDiff = diff;
+        closestPage = i + 1;
+      }
+    }
+
+    if (this.currentPage !== closestPage) {
+      this.currentPage = closestPage;
+      this.onPageChange(this.currentPage);
+    }
+  }
+
+  scrollToPage(pageNumber) {
+    const idx = pageNumber - 1;
+    if (this.layoutMode === 'single') {
+      this.pageWrappers.forEach((pw, i) => {
+        pw.style.display = i === idx ? 'block' : 'none';
+      });
+      this.currentPage = pageNumber;
+      this.renderVisiblePages();
+      this.onPageChange(this.currentPage);
+      return;
+    }
+
+    const targetWrap = this.pageWrappers[idx];
+    if (targetWrap) {
+      this.scrollContainer.scrollTo({
+        top: targetWrap.offsetTop - 20,
+        behavior: 'smooth',
+      });
+      this.currentPage = pageNumber;
+      this.onPageChange(this.currentPage);
+    }
+  }
+
+  setScale(newScale) {
+    if (newScale === 'fit-width') {
+      const containerWidth = this.scrollContainer.clientWidth - 80;
+      this.scale = Math.max(0.2, Math.min(3.0, containerWidth / 612));
+    } else if (newScale === 'fit-page') {
+      const containerHeight = this.scrollContainer.clientHeight - 80;
+      this.scale = Math.max(0.2, Math.min(3.0, containerHeight / 792));
+    } else {
+      this.scale = parseFloat(newScale);
+    }
+
+    this.renderedPages.clear();
+    this.buildPages();
+  }
+
+  setLayoutMode(mode) {
+    this.layoutMode = mode;
+    this.buildPages();
+  }
+
+  setTool(tool, options = {}) {
+    this.activeTool = tool;
+    this.toolOptions = { ...this.toolOptions, ...options };
+
+    this.scrollContainer.classList.toggle('hand-tool', tool === 'hand');
+  }
+}
