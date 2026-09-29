@@ -286,6 +286,16 @@ export class Toolbar {
               <polyline points="9 5 19 5 19 15"></polyline>
             </svg>
           </button>
+
+          <!-- Measure Tool -->
+          <button id="tool-measure" class="btn-icon" data-tooltip="Measure / Ruler" title="Measure">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21.3 15.3l-6.6 6.6a2 2 0 0 1-2.8 0L2.1 12.1a2 2 0 0 1 0-2.8l6.6-6.6a2 2 0 0 1 2.8 0l9.8 9.8a2 2 0 0 1 0 2.8z"></path>
+              <line x1="7" y1="7" x2="8" y2="8"></line>
+              <line x1="10.5" y1="10.5" x2="11.5" y2="11.5"></line>
+              <line x1="14" y1="14" x2="15" y2="15"></line>
+            </svg>
+          </button>
         </div>
 
         <div class="divider"></div>
@@ -341,7 +351,7 @@ export class Toolbar {
 
   bindEvents() {
     // Tool buttons
-    const tools = ['select', 'hand', 'highlight', 'pen', 'text', 'note', 'rect', 'circle', 'arrow', 'stamp', 'signature', 'redact', 'eraser'];
+    const tools = ['select', 'hand', 'highlight', 'pen', 'text', 'note', 'rect', 'circle', 'arrow', 'measure', 'stamp', 'signature', 'redact', 'eraser'];
     for (const t of tools) {
       const btn = this.container.querySelector(`#tool-${t}`);
       if (btn) {
@@ -490,6 +500,26 @@ export class Toolbar {
         <button class="color-dot-btn" data-color="#0f172a" style="background: #0f172a;" title="Black"></button>
         <input type="range" id="shape-width-slider" class="size-slider" min="1" max="8" value="${this.toolOptions.strokeWidth}" title="Border Width" />
       `;
+    } else if (this.currentTool === 'measure') {
+      sub.innerHTML = `
+        <span style="font-size: 11px; color: var(--text-muted); font-weight: 600;">Unit:</span>
+        <select id="measure-unit-select" style="padding: 2px 4px; border-radius: 4px; border: 1px solid var(--border); font-size: 11px; font-weight: 600;">
+          <option value="in" selected>Inches (in)</option>
+          <option value="mm">Millimeters (mm)</option>
+          <option value="pt">Points (pt)</option>
+        </select>
+        <button class="color-dot-btn active" data-color="#4f46e5" style="background: #4f46e5;" title="Indigo"></button>
+        <button class="color-dot-btn" data-color="#dc2626" style="background: #dc2626;" title="Red"></button>
+        <button class="color-dot-btn" data-color="#16a34a" style="background: #16a34a;" title="Green"></button>
+      `;
+      const sel = sub.querySelector('#measure-unit-select');
+      if (sel) {
+        sel.value = this.toolOptions.measureUnit || 'in';
+        sel.addEventListener('change', (e) => {
+          this.toolOptions.measureUnit = e.target.value;
+          this.onToolChange(this.currentTool, this.toolOptions);
+        });
+      }
     } else if (this.currentTool === 'stamp') {
       sub.innerHTML = `
         <span style="font-size: 11px; color: var(--text-muted); font-weight: 600;">Stamp:</span>

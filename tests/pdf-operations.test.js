@@ -89,3 +89,49 @@ test('PDF watermark and page numbering export', async () => {
   assert.strictEqual(verifyDoc.getTitle(), 'Watermarked Doc');
   assert.strictEqual(verifyDoc.getAuthor(), 'FolioFlux Author');
 });
+
+test('PDF measurement annotation export', async () => {
+  const { PDFExporter } = await import('../src/core/pdf-exporter.js');
+  const doc = await PDFDocument.create();
+  doc.addPage([600, 800]);
+  const rawBytes = await doc.save();
+
+  const mockPdfEngine = {
+    rawData: rawBytes,
+    pageOrder: [0],
+    pageRotations: new Map(),
+    metadata: { title: 'Blueprint Measurement' },
+  };
+
+  const mockAnnManager = {
+    getAnnotationsForPage: (idx) => {
+      if (idx === 0) {
+        return [
+          {
+            id: 'm1',
+            type: 'measure',
+            startX: 100,
+            startY: 200,
+            endX: 300,
+            endY: 200,
+            distPts: 200,
+            label: '2.78 in',
+            unit: 'in',
+            color: '#4f46e5',
+          },
+        ];
+      }
+      return [];
+    },
+  };
+
+  const exportedBytes = await PDFExporter.exportDocument({
+    pdfEngine: mockPdfEngine,
+    annotationsManager: mockAnnManager,
+    formEngine: null,
+  });
+
+  assert.ok(exportedBytes.length > 500, 'Should export PDF with measurement annotation');
+  const verifyDoc = await PDFDocument.load(exportedBytes);
+  assert.strictEqual(verifyDoc.getPageCount(), 1);
+});

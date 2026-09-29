@@ -211,6 +211,13 @@ export class CanvasView {
         rect.setAttribute('fill', 'rgba(0, 0, 0, 0.8)');
         svgOverlay.appendChild(rect);
         this.activeSvgTemp = rect;
+      } else if (this.activeTool === 'measure') {
+        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        line.setAttribute('stroke', this.toolOptions.color || '#4f46e5');
+        line.setAttribute('stroke-width', 2 * this.scale);
+        line.setAttribute('stroke-dasharray', '4 2');
+        svgOverlay.appendChild(line);
+        this.activeSvgTemp = line;
       }
     });
 
@@ -246,6 +253,11 @@ export class CanvasView {
         this.activeSvgTemp.setAttribute('rx', rx);
         this.activeSvgTemp.setAttribute('ry', ry);
       } else if (this.activeTool === 'arrow' && this.activeSvgTemp) {
+        this.activeSvgTemp.setAttribute('x1', this.startCoord.x * this.scale);
+        this.activeSvgTemp.setAttribute('y1', this.startCoord.y * this.scale);
+        this.activeSvgTemp.setAttribute('x2', pt.x * this.scale);
+        this.activeSvgTemp.setAttribute('y2', pt.y * this.scale);
+      } else if (this.activeTool === 'measure' && this.activeSvgTemp) {
         this.activeSvgTemp.setAttribute('x1', this.startCoord.x * this.scale);
         this.activeSvgTemp.setAttribute('y1', this.startCoord.y * this.scale);
         this.activeSvgTemp.setAttribute('x2', pt.x * this.scale);
@@ -318,6 +330,32 @@ export class CanvasView {
           strokeColor: this.toolOptions.color || '#ef4444',
           strokeWidth: this.toolOptions.strokeWidth || 2,
         });
+      } else if (this.activeTool === 'measure') {
+        const dx = pt.x - this.startCoord.x;
+        const dy = pt.y - this.startCoord.y;
+        const distPts = Math.sqrt(dx * dx + dy * dy);
+        if (distPts > 5) {
+          const unit = this.toolOptions.measureUnit || 'in';
+          let label = '';
+          if (unit === 'in') {
+            label = `${(distPts / 72).toFixed(2)} in`;
+          } else if (unit === 'mm') {
+            label = `${((distPts / 72) * 25.4).toFixed(1)} mm`;
+          } else {
+            label = `${Math.round(distPts)} pt`;
+          }
+          this.annotationsManager.addAnnotation(pageIndex, {
+            type: 'measure',
+            startX: this.startCoord.x,
+            startY: this.startCoord.y,
+            endX: pt.x,
+            endY: pt.y,
+            distPts,
+            label,
+            unit,
+            color: this.toolOptions.color || '#4f46e5',
+          });
+        }
       }
 
       if (this.activeSvgTemp && this.activeSvgTemp.parentNode) {
@@ -667,6 +705,64 @@ export class CanvasView {
         line.setAttribute('stroke', ann.strokeColor || '#ef4444');
         line.setAttribute('stroke-width', (ann.strokeWidth || 2) * this.scale);
         svgOverlay.appendChild(line);
+      } else if (ann.type === 'measure') {
+        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        line.setAttribute('x1', ann.startX * this.scale);
+        line.setAttribute('y1', ann.startY * this.scale);
+        line.setAttribute('x2', ann.endX * this.scale);
+        line.setAttribute('y2', ann.endY * this.scale);
+        line.setAttribute('stroke', ann.color || '#4f46e5');
+        line.setAttribute('stroke-width', 2 * this.scale);
+        svgOverlay.appendChild(line);
+
+        const dx = (ann.endX - ann.startX) * this.scale;
+        const dy = (ann.endY - ann.startY) * this.scale;
+        const len = Math.sqrt(dx * dx + dy * dy) || 1;
+        const nx = (-dy / len) * (6 * this.scale);
+        const ny = (dx / len) * (6 * this.scale);
+
+        const cap1 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        cap1.setAttribute('x1', ann.startX * this.scale - nx);
+        cap1.setAttribute('y1', ann.startY * this.scale - ny);
+        cap1.setAttribute('x2', ann.startX * this.scale + nx);
+        cap1.setAttribute('y2', ann.startY * this.scale + ny);
+        cap1.setAttribute('stroke', ann.color || '#4f46e5');
+        cap1.setAttribute('stroke-width', 2 * this.scale);
+        svgOverlay.appendChild(cap1);
+
+        const cap2 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        cap2.setAttribute('x1', ann.endX * this.scale - nx);
+        cap2.setAttribute('y1', ann.endY * this.scale - ny);
+        cap2.setAttribute('x2', ann.endX * this.scale + nx);
+        cap2.setAttribute('y2', ann.endY * this.scale + ny);
+        cap2.setAttribute('stroke', ann.color || '#4f46e5');
+        cap2.setAttribute('stroke-width', 2 * this.scale);
+        svgOverlay.appendChild(cap2);
+
+        const badge = document.createElement('div');
+        badge.className = 'canvas-measure-badge';
+        const midX = ((ann.startX + ann.endX) / 2) * this.scale;
+        const midY = ((ann.startY + ann.endY) / 2) * this.scale;
+        badge.style.position = 'absolute';
+        badge.style.left = `${midX}px`;
+        badge.style.top = `${midY}px`;
+        badge.style.transform = 'translate(-50%, -50%)';
+        badge.style.padding = '2px 6px';
+        badge.style.borderRadius = '4px';
+        badge.style.backgroundColor = ann.color || '#4f46e5';
+        badge.style.color = '#ffffff';
+        badge.style.fontSize = `${10 * this.scale}px`;
+        badge.style.fontWeight = '700';
+        badge.style.pointerEvents = 'auto';
+        badge.style.cursor = 'pointer';
+        badge.style.boxShadow = '0 1px 3px rgba(0,0,0,0.2)';
+        badge.textContent = ann.label;
+        badge.title = 'Click to delete measurement';
+        badge.addEventListener('click', (e) => {
+          e.stopPropagation();
+          this.annotationsManager.deleteAnnotation(pageIndex, ann.id);
+        });
+        overlayLayer.appendChild(badge);
       } else if (ann.type === 'text') {
         const box = document.createElement('div');
         box.className = 'canvas-textbox';

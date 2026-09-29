@@ -168,6 +168,51 @@ export class PDFExporter {
           });
         }
 
+        // Dimension / Measurement
+        else if (ann.type === 'measure') {
+          const stroke = parseColor(ann.color || '#4f46e5');
+          const startY = height - ann.startY;
+          const endY = height - ann.endY;
+
+          page.drawLine({
+            start: { x: ann.startX, y: startY },
+            end: { x: ann.endX, y: endY },
+            color: stroke,
+            thickness: 1.5,
+          });
+
+          const dx = ann.endX - ann.startX;
+          const dy = endY - startY;
+          const len = Math.sqrt(dx * dx + dy * dy) || 1;
+          const nx = (-dy / len) * 5;
+          const ny = (dx / len) * 5;
+
+          page.drawLine({
+            start: { x: ann.startX - nx, y: startY - ny },
+            end: { x: ann.startX + nx, y: startY + ny },
+            color: stroke,
+            thickness: 1.5,
+          });
+          page.drawLine({
+            start: { x: ann.endX - nx, y: endY - ny },
+            end: { x: ann.endX + nx, y: endY + ny },
+            color: stroke,
+            thickness: 1.5,
+          });
+
+          if (ann.label) {
+            const midX = (ann.startX + ann.endX) / 2;
+            const midY = (startY + endY) / 2 + 3;
+            page.drawText(ann.label, {
+              x: midX - 16,
+              y: midY,
+              size: 8,
+              font: fontBold,
+              color: stroke,
+            });
+          }
+        }
+
         // Freehand Ink Drawing
         else if (ann.type === 'ink' && ann.points && ann.points.length > 1) {
           const stroke = parseColor(ann.color || '#000000');

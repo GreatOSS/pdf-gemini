@@ -80,20 +80,25 @@ During interactive testing via Playwright browser and desktop computer-use tools
    - *Requirement*: Users regularly require document-wide watermarks ("CONFIDENTIAL", "DRAFT") and automated page numbering ("Page X of Y") before publishing or sharing.
    - *Implementation*: Added interactive Watermark & Page Numbering modal with opacity/color customization and position presets; integrated into live canvas overlays and `PDFExporter` binary compilation. Verified with automated regression tests.
 
+11. **Dimension & Distance Measurement Tool**:
+   - *Requirement*: Architecture, design, and technical users require a ruler to measure distances across blueprints and diagrams.
+   - *Implementation*: Added interactive Measure tool supporting Inches, Millimeters, and Points (72 pt = 1 in = 25.4 mm) with live drag feedback, orthogonal dimension end-caps, interactive deletion, and binary PDF export.
+
 ---
 
 ## 4. Automated Test Suite Status
 
 ```
-✔ AnnotationsManager add, undo, and redo (1.06ms)
-✔ AnnotationsManager update and delete (0.31ms)
-✔ CLI --version and --help output (257.67ms)
-✔ CLI info on generated sample file (196.89ms)
-✔ PDF creation and page addition (28.66ms)
-✔ PDF page rotation (3.36ms)
-✔ PDF merge multiple documents (2.94ms)
-✔ PDF split document (1.79ms)
-✔ PDF watermark and page numbering export (11.10ms)
+✔ AnnotationsManager add, undo, and redo (1.00ms)
+✔ AnnotationsManager update and delete (0.27ms)
+✔ CLI --version and --help output (251.68ms)
+✔ CLI info on generated sample file (200.36ms)
+✔ PDF creation and page addition (25.13ms)
+✔ PDF page rotation (3.51ms)
+✔ PDF merge multiple documents (4.74ms)
+✔ PDF split document (1.85ms)
+✔ PDF watermark and page numbering export (11.53ms)
+✔ PDF measurement annotation export (5.38ms)
 
-Total: 9 tests passed, 0 failures, 0 skipped.
+Total: 10 tests passed, 0 failures, 0 skipped.
 ```

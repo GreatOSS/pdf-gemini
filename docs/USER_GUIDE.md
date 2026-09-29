@@ -57,6 +57,13 @@ FolioFlux provides a comprehensive annotation toolstrip right below the header:
 - **Ellipses / Circles**: Circle numbers, terms, or diagram nodes.
 - **Arrows & Lines**: Point out important sections.
 
+### Measure & Dimension Tool (Ruler)
+- Select the **Measure** tool in the toolstrip.
+- Drag between two points on any drawing, floor plan, or document.
+- Choose your preferred unit in the suboptions: **Inches (`in`)**, **Millimeters (`mm`)**, or **Points (`pt`)**.
+- FolioFlux draws a dimension line with end caps and a high-contrast measurement badge.
+- Click any measurement badge to remove it, or export the document to embed dimension markings permanently.
+
 ### Sticky Notes & Comments
 - Click on any page to drop a yellow sticky note marker.
 - Type notes, feedback, or review questions.
