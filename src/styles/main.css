@@ -714,6 +714,69 @@ button, input, select, textarea {
   color: #854d0e;
 }
 
+/* Sticky Note Popover Editor */
+.note-popover {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 100;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+  padding: 8px;
+  width: 220px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  cursor: default;
+}
+
+.note-popover-text {
+  width: 100%;
+  height: 70px;
+  padding: 6px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-family: inherit;
+  font-size: 12px;
+  resize: vertical;
+  background: var(--bg-surface);
+  color: var(--text-main);
+  outline: none;
+}
+
+.note-popover-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.note-popover-footer button {
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+
+.note-popover-footer button:hover {
+  opacity: 0.85;
+}
+
+.btn-delete-note {
+  background: transparent;
+  color: var(--danger);
+  border: 1px solid var(--danger);
+}
+
+.btn-save-note {
+  background: var(--primary);
+  color: #ffffff;
+  border: none;
+}
+
 /* Rubber Stamps & Signatures on Canvas */
 .canvas-stamp {
   position: absolute;
@@ -1188,6 +1251,48 @@ body.presentation-mode:hover .presentation-hud,
   color: var(--primary);
 }
 
+/* Floating Text Selection Quick Menu */
+.selection-popup {
+  position: fixed;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+  padding: 4px 6px;
+  pointer-events: auto;
+  transform: translate(-50%, -120%);
+  animation: fadeInPopup 0.12s ease-out;
+}
+
+@keyframes fadeInPopup {
+  from { opacity: 0; transform: translate(-50%, -100%); }
+  to { opacity: 1; transform: translate(-50%, -120%); }
+}
+
+.selection-popup button {
+  background: transparent;
+  border: none;
+  border-radius: 5px;
+  padding: 4px 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-main);
+  transition: background-color 0.12s ease, color 0.12s ease;
+}
+
+.selection-popup button:hover {
+  background: var(--bg-surface-hover);
+  color: var(--primary);
+}
+
 /* Print Stylesheet for High-Quality Clean Document Printing */
 @media print {
   @page {
@@ -1230,7 +1335,7 @@ body.presentation-mode:hover .presentation-hud,
     background: transparent !important;
   }
 
-  .page-container {
+  .page-canvas-wrapper {
     box-shadow: none !important;
     border: none !important;
     margin: 0 auto !important;
@@ -1240,12 +1345,6 @@ body.presentation-mode:hover .presentation-hud,
     max-width: 100% !important;
     height: auto !important;
     display: block !important;
-  }
-
-  .page-canvas-wrapper {
-    width: 100% !important;
-    height: auto !important;
-    margin: 0 auto !important;
   }
 
   canvas.page-pdf-canvas {

@@ -60,34 +60,35 @@ Click the **Presentation Mode** button (`P`):
 FolioFlux provides a comprehensive annotation toolstrip right below the header:
 
 ### Highlighter & Text Markup
-- **Highlighter**: Select highlight colors (Yellow, Green, Cyan, Pink, Orange) with custom opacity and natural multiply blending.
+- **Highlighter Tool (`E`)**: Select highlight colors (Yellow, Green, Cyan, Pink, Orange) with custom opacity and natural multiply blending. Drag over text or areas to highlight.
+- **Floating Text Selection Menu**: Select any text on a page to summon an instant floating action menu with **Highlight** (one-click highlight) and **Copy** (copies text to clipboard).
 - **Underline & Strikeout**: Mark key text or strike through obsolete clauses.
 
 ### Freehand Pen & Ink
-- Draw notes, diagrams, or arrows freehand.
+- Draw notes, diagrams, or arrows freehand (`P` for Presentation, or select Pen in toolstrip).
 - Choose stroke colors, stroke width (1px to 12px), and smooth bezier rendering.
 - **Eraser Tool**: Erase ink strokes or delete annotations.
 
-### Text Boxes
-- Click anywhere on a page to insert an editable text box.
+### Text Boxes (`T`)
+- Press `T` and click anywhere on a page to insert an in-place editable text box with auto-focus.
 - Customize font size (10px to 32px), text color, and alignment.
 - Drag to reposition or edit text in-place.
 
-### Shapes
-- **Rectangles**: Draw bordered boxes or filled highlight zones.
-- **Ellipses / Circles**: Circle numbers, terms, or diagram nodes.
+### Shapes (`R`, `C`)
+- **Rectangles (`R`)**: Draw bordered boxes or filled highlight zones.
+- **Ellipses / Circles (`C`)**: Circle numbers, terms, or diagram nodes.
 - **Arrows & Lines**: Point out important sections.
 
-### Measure & Dimension Tool (Ruler)
-- Select the **Measure** tool in the toolstrip.
+### Measure & Dimension Tool (`M`)
+- Press `M` or select the **Measure** tool in the toolstrip.
 - Drag between two points on any drawing, floor plan, or document.
-- Choose your preferred unit in the suboptions: **Inches (`in`)**, **Millimeters (`mm`)**, or **Points (`pt`)**.
+- Choose your preferred unit in the suboptions: **Inches (`in`)**, **Millimeters (`mm`)**, **Feet (`ft`)**, **Meters (`m`)**, or **Points (`pt`)**.
 - FolioFlux draws a dimension line with end caps and a high-contrast measurement badge.
 - Click any measurement badge to remove it, or export the document to embed dimension markings permanently.
 
-### Sticky Notes & Comments
-- Click on any page to drop a yellow sticky note marker.
-- Type notes, feedback, or review questions.
+### Sticky Notes & Comments (`N`)
+- Press `N` and click on any page to drop a yellow sticky note marker.
+- Click any sticky note on the page to open an interactive in-place popover editor with text editing and deletion.
 - All notes appear in the **Notes** sidebar tab with one-click page jumping.
 
 ### Rubber Stamps

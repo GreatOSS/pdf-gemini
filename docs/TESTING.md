@@ -119,6 +119,17 @@ During interactive testing via Playwright browser and desktop computer-use tools
 20. **Universal Escape Key & Backdrop Dismiss**:
    - *Improvement*: Ensured all application modal dialogs (Shortcuts, Properties, Password, Watermark, Organizer, Signature) dismiss on backdrop click and `Escape` key press.
 
+21. **Floating Text Selection Quick Menu**:
+   - *Requirement*: Enable instant highlight and copy directly upon selecting document text with the mouse.
+   - *Implementation*: Added floating action bar (`.selection-popup`) positioned above active range rects; binds pointerdown handlers to create highlight annotations across lines or copy text to clipboard without losing selection state.
+
+22. **In-Place Popover Note Editor & Text Box Auto-Focus**:
+   - *Requirement*: Avoid disruptive browser `prompt()` dialogs when creating or editing sticky notes and text boxes.
+   - *Implementation*: Replaced prompts with in-place `.note-popover` card (text editor, done, delete) and auto-focused `contenteditable` text boxes with live input synchronization.
+
+23. **Single-Key Tool Keyboard Shortcuts**:
+   - *Improvement*: Added single-key shortcuts (`V` Select, `H` Hand, `E` Highlighter, `T` Text, `N` Sticky Note, `R` Rect, `C` Circle, `M` Measure) for rapid, seamless markup workflows without toolbar mouse travel.
+
 ---
 
 ## 4. Automated Test Suite Status

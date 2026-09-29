@@ -103,6 +103,125 @@ export class CanvasView {
         }
       });
     }
+
+    this.initSelectionPopup();
+  }
+
+  initSelectionPopup() {
+    this.selectionPopup = document.createElement('div');
+    this.selectionPopup.className = 'selection-popup';
+    this.selectionPopup.style.display = 'none';
+    this.selectionPopup.innerHTML = `
+      <button id="btn-popup-highlight" title="Highlight Selection">
+        <span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #facc15;"></span>
+        <span>Highlight</span>
+      </button>
+      <button id="btn-popup-copy" title="Copy Text">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13">
+          <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+        </svg>
+        <span>Copy</span>
+      </button>
+    `;
+    document.body.appendChild(this.selectionPopup);
+
+    const updatePopup = () => {
+      const sel = window.getSelection();
+      if (!sel || sel.isCollapsed || !sel.rangeCount || this.activeTool !== 'select') {
+        this.selectionPopup.style.display = 'none';
+        return;
+      }
+      const range = sel.getRangeAt(0);
+      const text = sel.toString().trim();
+      if (!text) {
+        this.selectionPopup.style.display = 'none';
+        return;
+      }
+
+      const startEl = (range.startContainer.nodeType === 1 ? range.startContainer : range.startContainer.parentElement);
+      const isInsideDoc = startEl?.closest('.textLayer') || startEl?.closest('.page-canvas-wrapper');
+      if (!isInsideDoc) {
+        this.selectionPopup.style.display = 'none';
+        return;
+      }
+
+      const rects = range.getClientRects();
+      const rect = rects.length > 0 ? rects[0] : range.getBoundingClientRect();
+      if (!rect || (rect.width === 0 && rect.height === 0)) {
+        this.selectionPopup.style.display = 'none';
+        return;
+      }
+
+      this.currentSelectionRects = Array.from(rects).map(r => ({
+        left: r.left,
+        top: r.top,
+        width: r.width,
+        height: r.height,
+      }));
+      this.currentSelectionPageWrap = startEl?.closest('.page-canvas-wrapper');
+      this.currentSelectionText = text;
+
+      this.selectionPopup.style.display = 'flex';
+      this.selectionPopup.style.left = `${Math.floor(rect.left + rect.width / 2)}px`;
+      this.selectionPopup.style.top = `${Math.floor(rect.top)}px`;
+    };
+
+    document.addEventListener('selectionchange', () => {
+      setTimeout(updatePopup, 30);
+    });
+    this.scrollContainer.addEventListener('mouseup', () => {
+      setTimeout(updatePopup, 30);
+    });
+
+    const handleCopy = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const text = this.currentSelectionText || window.getSelection()?.toString();
+      if (text) {
+        navigator.clipboard.writeText(text);
+      }
+      this.selectionPopup.style.display = 'none';
+      this.currentSelectionRects = null;
+      this.currentSelectionPageWrap = null;
+    };
+
+    const handleHighlight = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const pageWrap = this.currentSelectionPageWrap;
+      const rects = this.currentSelectionRects;
+      if (!pageWrap || !rects || rects.length === 0) return;
+
+      const pageIndex = parseInt(pageWrap.dataset.pageIndex, 10);
+      const pageRect = pageWrap.getBoundingClientRect();
+
+      for (const r of rects) {
+        if (r.width > 2 && r.height > 2) {
+          const x = (r.left - pageRect.left) / this.scale;
+          const y = (r.top - pageRect.top) / this.scale;
+          const width = r.width / this.scale;
+          const height = r.height / this.scale;
+          this.annotationsManager.addAnnotation(pageIndex, {
+            type: 'highlight',
+            x, y, width, height,
+            color: this.toolOptions.highlighterColor || '#facc15',
+            opacity: 0.45,
+          });
+        }
+      }
+      if (window.getSelection) window.getSelection().removeAllRanges();
+      this.selectionPopup.style.display = 'none';
+      this.currentSelectionRects = null;
+      this.currentSelectionPageWrap = null;
+    };
+
+    const btnCopy = this.selectionPopup.querySelector('#btn-popup-copy');
+    const btnHighlight = this.selectionPopup.querySelector('#btn-popup-highlight');
+    btnCopy.addEventListener('pointerdown', handleCopy);
+    btnCopy.addEventListener('click', handleCopy);
+    btnHighlight.addEventListener('pointerdown', handleHighlight);
+    btnHighlight.addEventListener('click', handleHighlight);
   }
 
   async buildPages() {
@@ -223,6 +342,13 @@ export class CanvasView {
         rect.setAttribute('fill', 'rgba(0, 0, 0, 0.8)');
         svgOverlay.appendChild(rect);
         this.activeSvgTemp = rect;
+      } else if (this.activeTool === 'highlight') {
+        const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        rect.setAttribute('fill', this.toolOptions.highlighterColor || '#facc15');
+        rect.setAttribute('fill-opacity', '0.4');
+        rect.style.mixBlendMode = 'multiply';
+        svgOverlay.appendChild(rect);
+        this.activeSvgTemp = rect;
       } else if (this.activeTool === 'measure') {
         const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
         line.setAttribute('stroke', this.toolOptions.color || '#4f46e5');
@@ -244,7 +370,7 @@ export class CanvasView {
           d += ` L ${this.drawingPoints[i].x * this.scale} ${this.drawingPoints[i].y * this.scale}`;
         }
         this.activeSvgTemp.setAttribute('d', d);
-      } else if (this.activeTool === 'rect' || this.activeTool === 'redact') {
+      } else if (this.activeTool === 'rect' || this.activeTool === 'redact' || this.activeTool === 'highlight') {
         if (this.activeSvgTemp) {
           const x = Math.min(this.startCoord.x, pt.x) * this.scale;
           const y = Math.min(this.startCoord.y, pt.y) * this.scale;
@@ -316,6 +442,19 @@ export class CanvasView {
             textOverlay: 'REDACTED',
           });
         }
+      } else if (this.activeTool === 'highlight') {
+        const x = Math.min(this.startCoord.x, pt.x);
+        const y = Math.min(this.startCoord.y, pt.y);
+        const width = Math.abs(pt.x - this.startCoord.x);
+        const height = Math.abs(pt.y - this.startCoord.y);
+        if (width > 4 && height > 4) {
+          this.annotationsManager.addAnnotation(pageIndex, {
+            type: 'highlight',
+            x, y, width, height,
+            color: this.toolOptions.highlighterColor || '#facc15',
+            opacity: 0.4,
+          });
+        }
       } else if (this.activeTool === 'circle') {
         const x = Math.min(this.startCoord.x, pt.x);
         const y = Math.min(this.startCoord.y, pt.y);
@@ -384,28 +523,37 @@ export class CanvasView {
   }
 
   createTextAnnotation(pageIndex, pt) {
-    const text = prompt('Enter text for document:', 'Annotation Text');
-    if (!text) return;
-
     this.annotationsManager.addAnnotation(pageIndex, {
       type: 'text',
       x: pt.x,
       y: pt.y,
-      text,
+      text: 'Type text here',
       fontSize: this.toolOptions.fontSize || 14,
       color: this.toolOptions.color || '#0f172a',
     });
+
+    setTimeout(() => {
+      const pageWrap = this.pageWrappers[pageIndex];
+      const box = pageWrap?.querySelector('.canvas-textbox-content');
+      if (box) {
+        box.focus();
+        if (window.getSelection && document.createRange) {
+          const range = document.createRange();
+          range.selectNodeContents(box);
+          const sel = window.getSelection();
+          sel.removeAllRanges();
+          sel.addRange(range);
+        }
+      }
+    }, 40);
   }
 
   createNoteAnnotation(pageIndex, pt) {
-    const text = prompt('Enter note / comment:', 'Note comment');
-    if (!text) return;
-
     this.annotationsManager.addAnnotation(pageIndex, {
       type: 'note',
       x: pt.x,
       y: pt.y,
-      text,
+      text: 'Note comment',
       color: '#facc15',
     });
   }
@@ -702,6 +850,16 @@ export class CanvasView {
         rect.setAttribute('stroke-width', (ann.strokeWidth || 2) * this.scale);
         rect.setAttribute('fill', ann.fillColor || 'transparent');
         svgOverlay.appendChild(rect);
+      } else if (ann.type === 'highlight') {
+        const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        rect.setAttribute('x', ann.x * this.scale);
+        rect.setAttribute('y', ann.y * this.scale);
+        rect.setAttribute('width', ann.width * this.scale);
+        rect.setAttribute('height', ann.height * this.scale);
+        rect.setAttribute('fill', ann.color || '#facc15');
+        rect.setAttribute('fill-opacity', String(ann.opacity || 0.4));
+        rect.style.mixBlendMode = 'multiply';
+        svgOverlay.appendChild(rect);
       } else if (ann.type === 'circle') {
         const ellipse = document.createElementNS('http://www.w3.org/2000/svg', 'ellipse');
         ellipse.setAttribute('cx', ann.x * this.scale);
@@ -787,6 +945,15 @@ export class CanvasView {
         box.style.fontSize = `${(ann.fontSize || 14) * this.scale}px`;
         box.style.color = ann.color || '#0f172a';
         box.innerHTML = `<div class="canvas-textbox-content" contenteditable="true">${ann.text}</div>`;
+        const contentEl = box.querySelector('.canvas-textbox-content');
+        if (contentEl) {
+          contentEl.addEventListener('input', () => {
+            ann.text = contentEl.innerText;
+          });
+          contentEl.addEventListener('blur', () => {
+            ann.text = contentEl.innerText.trim() || ann.text;
+          });
+        }
         this.attachDragHandler(box, ann, pageIndex);
         overlayLayer.appendChild(box);
       } else if (ann.type === 'note') {
@@ -796,8 +963,40 @@ export class CanvasView {
         note.style.top = `${ann.y * this.scale}px`;
         note.title = ann.text;
         note.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15.5 3H5a2 2 0 0 0-2 2v14c0 1.1.9 2 2 2h14a2 2 0 0 0 2-2V8.5L15.5 3Z"></path></svg>`;
-        note.addEventListener('click', () => {
-          alert(`Sticky Note:\n\n${ann.text}`);
+        note.addEventListener('click', (e) => {
+          e.stopPropagation();
+          let popover = note.querySelector('.note-popover');
+          if (popover) {
+            popover.remove();
+            return;
+          }
+          popover = document.createElement('div');
+          popover.className = 'note-popover';
+          popover.addEventListener('mousedown', (ev) => ev.stopPropagation());
+          popover.innerHTML = `
+            <textarea class="note-popover-text" placeholder="Add note...">${ann.text || ''}</textarea>
+            <div class="note-popover-footer">
+              <button class="btn-delete-note" title="Delete note">Delete</button>
+              <button class="btn-save-note">Done</button>
+            </div>
+          `;
+          note.appendChild(popover);
+          const textarea = popover.querySelector('.note-popover-text');
+          textarea.focus();
+          textarea.addEventListener('input', () => {
+            ann.text = textarea.value;
+            note.title = ann.text;
+          });
+          popover.querySelector('.btn-save-note').addEventListener('click', (ev) => {
+            ev.stopPropagation();
+            ann.text = textarea.value;
+            note.title = ann.text;
+            popover.remove();
+          });
+          popover.querySelector('.btn-delete-note').addEventListener('click', (ev) => {
+            ev.stopPropagation();
+            this.annotationsManager.deleteAnnotation(pageIndex, ann.id);
+          });
         });
         this.attachDragHandler(note, ann, pageIndex);
         overlayLayer.appendChild(note);
@@ -839,7 +1038,7 @@ export class CanvasView {
     let initLeft = 0, initTop = 0;
 
     element.addEventListener('mousedown', (e) => {
-      if (e.target.isContentEditable) return;
+      if (e.target.isContentEditable || e.target.closest('.note-popover')) return;
       if (e.button !== 0) return;
       e.stopPropagation();
 

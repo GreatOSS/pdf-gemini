@@ -594,6 +594,18 @@ export class FolioFluxApp {
           this.toolbar.setActiveTool('hand');
         } else if (e.key === 'v' || e.key === 'V') {
           this.toolbar.setActiveTool('select');
+        } else if (e.key === 'e' || e.key === 'E') {
+          this.toolbar.setActiveTool('highlight');
+        } else if (e.key === 't' || e.key === 'T') {
+          this.toolbar.setActiveTool('text');
+        } else if (e.key === 'n' || e.key === 'N') {
+          this.toolbar.setActiveTool('note');
+        } else if (e.key === 'r' || e.key === 'R') {
+          this.toolbar.setActiveTool('rect');
+        } else if (e.key === 'c' || e.key === 'C') {
+          this.toolbar.setActiveTool('circle');
+        } else if (e.key === 'm' || e.key === 'M') {
+          this.toolbar.setActiveTool('measure');
         } else if (e.key === 'p' || e.key === 'P') {
           this.togglePresentationMode();
         } else if (e.key === 'Escape') {

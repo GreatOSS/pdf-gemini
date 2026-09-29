@@ -52,10 +52,19 @@ export class ShortcutsModal {
               <strong>0</strong>: Fit to Width
             </div>
             <div style="background: var(--bg-surface-secondary); padding: 8px 12px; border-radius: 6px;">
-              <strong>H</strong>: Hand / Pan Tool
+              <strong>V / H</strong>: Select / Hand Tool
             </div>
             <div style="background: var(--bg-surface-secondary); padding: 8px 12px; border-radius: 6px;">
-              <strong>V</strong>: Selection Tool
+              <strong>E</strong>: Highlighter Tool
+            </div>
+            <div style="background: var(--bg-surface-secondary); padding: 8px 12px; border-radius: 6px;">
+              <strong>T / N</strong>: Text Box / Sticky Note
+            </div>
+            <div style="background: var(--bg-surface-secondary); padding: 8px 12px; border-radius: 6px;">
+              <strong>R / C</strong>: Rectangle / Circle Shapes
+            </div>
+            <div style="background: var(--bg-surface-secondary); padding: 8px 12px; border-radius: 6px;">
+              <strong>M</strong>: Measure / Ruler Tool
             </div>
             <div style="background: var(--bg-surface-secondary); padding: 8px 12px; border-radius: 6px;">
               <strong>D</strong>: Reading Mode (Light/Dark/Sepia)
