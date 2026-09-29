@@ -60,6 +60,18 @@ export class ShortcutsModal {
             <div style="background: var(--bg-surface-secondary); padding: 8px 12px; border-radius: 6px;">
               <strong>B</strong>: Toggle Sidebar
             </div>
+            <div style="background: var(--bg-surface-secondary); padding: 8px 12px; border-radius: 6px;">
+              <strong>P</strong>: Presentation Mode
+            </div>
+            <div style="background: var(--bg-surface-secondary); padding: 8px 12px; border-radius: 6px;">
+              <strong>Home / End</strong>: First / Last Page
+            </div>
+            <div style="background: var(--bg-surface-secondary); padding: 8px 12px; border-radius: 6px;">
+              <strong>j / k</strong>: Smooth Scroll Down / Up
+            </div>
+            <div style="background: var(--bg-surface-secondary); padding: 8px 12px; border-radius: 6px;">
+              <strong>Ctrl + Wheel</strong>: Smooth Zoom In / Out
+            </div>
           </div>
 
           <h4 style="margin-bottom: 8px; color: var(--primary);">About FolioFlux</h4>

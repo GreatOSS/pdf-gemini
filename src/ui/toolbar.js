@@ -530,6 +530,8 @@ export class Toolbar {
           <option value="in" selected>Inches (in)</option>
           <option value="mm">Millimeters (mm)</option>
           <option value="pt">Points (pt)</option>
+          <option value="ft">Feet (1/4" = 1')</option>
+          <option value="m">Meters (1:100)</option>
         </select>
         <button class="color-dot-btn active" data-color="#4f46e5" style="background: #4f46e5;" title="Indigo"></button>
         <button class="color-dot-btn" data-color="#dc2626" style="background: #dc2626;" title="Red"></button>

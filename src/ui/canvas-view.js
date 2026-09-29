@@ -353,6 +353,10 @@ export class CanvasView {
             label = `${(distPts / 72).toFixed(2)} in`;
           } else if (unit === 'mm') {
             label = `${((distPts / 72) * 25.4).toFixed(1)} mm`;
+          } else if (unit === 'ft') {
+            label = `${(distPts / 18).toFixed(1)} ft`;
+          } else if (unit === 'm') {
+            label = `${(distPts / 28.346).toFixed(2)} m`;
           } else {
             label = `${Math.round(distPts)} pt`;
           }
