@@ -322,6 +322,13 @@ export class Toolbar {
               <path d="m5 11 9 9"></path>
             </svg>
           </button>
+
+          <!-- Watermark & Page Numbers -->
+          <button id="tool-watermark" class="btn-icon" data-tooltip="Watermark & Page Numbers" title="Watermark">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"></path>
+            </svg>
+          </button>
         </div>
 
         <!-- Suboptions area dynamically tailored for active tool -->
@@ -340,6 +347,11 @@ export class Toolbar {
       if (btn) {
         btn.addEventListener('click', () => this.setActiveTool(t));
       }
+    }
+
+    const wmBtn = this.container.querySelector('#tool-watermark');
+    if (wmBtn) {
+      wmBtn.addEventListener('click', () => this.onAction('open-watermark-modal'));
     }
 
     // Header actions

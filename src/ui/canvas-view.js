@@ -429,8 +429,93 @@ export class CanvasView {
 
       // Render interactive AcroForm fields
       this.renderFormFields(pageWrap, displayIndex, viewport);
+
+      // Render watermark and page numbers
+      this.updateWatermarkForPage(pageWrap);
+      this.updatePageNumberForPage(pageWrap, displayIndex);
     } catch {
       // Ignore if rendering cancelled
+    }
+  }
+
+  setWatermark(watermark) {
+    this.watermark = watermark;
+    this.pageWrappers.forEach(pw => this.updateWatermarkForPage(pw));
+  }
+
+  setPageNumbers(pageNumbers) {
+    this.pageNumbers = pageNumbers;
+    this.pageWrappers.forEach((pw, i) => this.updatePageNumberForPage(pw, i));
+  }
+
+  updateWatermarkForPage(pageWrap) {
+    let wm = pageWrap.querySelector('.canvas-watermark');
+    if (!this.watermark) {
+      if (wm) wm.remove();
+      return;
+    }
+    if (!wm) {
+      wm = document.createElement('div');
+      wm.className = 'canvas-watermark';
+      wm.style.position = 'absolute';
+      wm.style.inset = '0';
+      wm.style.display = 'flex';
+      wm.style.alignItems = 'center';
+      wm.style.justifyContent = 'center';
+      wm.style.pointerEvents = 'none';
+      wm.style.userSelect = 'none';
+      wm.style.zIndex = '4';
+      pageWrap.appendChild(wm);
+    }
+    wm.style.transform = 'rotate(-35deg)';
+    wm.style.fontSize = `${54 * this.scale}px`;
+    wm.style.fontWeight = '800';
+    wm.style.letterSpacing = '4px';
+    wm.style.color = this.watermark.color || '#dc2626';
+    wm.style.opacity = this.watermark.opacity || 0.25;
+    wm.textContent = this.watermark.text || '';
+  }
+
+  updatePageNumberForPage(pageWrap, pageIndex) {
+    let pn = pageWrap.querySelector('.canvas-page-number-tag');
+    if (!this.pageNumbers) {
+      if (pn) pn.remove();
+      return;
+    }
+    if (!pn) {
+      pn = document.createElement('div');
+      pn.className = 'canvas-page-number-tag';
+      pn.style.position = 'absolute';
+      pn.style.pointerEvents = 'none';
+      pn.style.userSelect = 'none';
+      pn.style.fontSize = `${11 * this.scale}px`;
+      pn.style.color = '#64748b';
+      pn.style.zIndex = '4';
+      pageWrap.appendChild(pn);
+    }
+    const label = this.pageNumbers.format
+      .replace('{page}', String(pageIndex + 1))
+      .replace('{total}', String(this.pageWrappers.length));
+
+    pn.textContent = label;
+    if (this.pageNumbers.position === 'bottom-right') {
+      pn.style.bottom = '16px';
+      pn.style.right = '24px';
+      pn.style.left = 'auto';
+      pn.style.top = 'auto';
+      pn.style.transform = 'none';
+    } else if (this.pageNumbers.position === 'top-right') {
+      pn.style.top = '16px';
+      pn.style.right = '24px';
+      pn.style.left = 'auto';
+      pn.style.bottom = 'auto';
+      pn.style.transform = 'none';
+    } else {
+      pn.style.bottom = '16px';
+      pn.style.left = '50%';
+      pn.style.top = 'auto';
+      pn.style.right = 'auto';
+      pn.style.transform = 'translateX(-50%)';
     }
   }
 

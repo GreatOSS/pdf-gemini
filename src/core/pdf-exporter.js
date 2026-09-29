@@ -23,7 +23,7 @@ function parseColor(hex) {
  * signatures, rubber stamps, form field values, and permanent redactions into a valid PDF binary.
  */
 export class PDFExporter {
-  static async exportDocument({ pdfEngine, annotationsManager, formEngine, flattenForms = true }) {
+  static async exportDocument({ pdfEngine, annotationsManager, formEngine, flattenForms = true, watermark = null, pageNumbers = null }) {
     if (!pdfEngine || !pdfEngine.rawData) {
       throw new Error('No PDF document loaded to export');
     }
@@ -246,6 +246,49 @@ export class PDFExporter {
             console.warn('Could not embed signature image:', err);
           }
         }
+      }
+
+      // Draw document watermark
+      if (watermark && watermark.text) {
+        const wmColor = parseColor(watermark.color || '#dc2626');
+        const wmSize = watermark.size || Math.floor(Math.min(width, height) * 0.09);
+        page.drawText(watermark.text, {
+          x: width * 0.15,
+          y: height * 0.35,
+          size: wmSize,
+          font: fontBold,
+          color: wmColor,
+          rotate: degrees(45),
+          opacity: watermark.opacity || 0.25,
+        });
+      }
+
+      // Draw document page numbers
+      if (pageNumbers && pageNumbers.format) {
+        const label = pageNumbers.format
+          .replace('{page}', String(displayIdx + 1))
+          .replace('{total}', String(targetPages.length));
+
+        const pnSize = 9;
+        const textWidth = fontRegular.widthOfTextAtSize(label, pnSize);
+        let pnX = (width - textWidth) / 2;
+        let pnY = 24;
+
+        if (pageNumbers.position === 'bottom-right') {
+          pnX = width - textWidth - 36;
+          pnY = 24;
+        } else if (pageNumbers.position === 'top-right') {
+          pnX = width - textWidth - 36;
+          pnY = height - 30;
+        }
+
+        page.drawText(label, {
+          x: pnX,
+          y: pnY,
+          size: pnSize,
+          font: fontRegular,
+          color: rgb(0.4, 0.45, 0.55),
+        });
       }
     }
 

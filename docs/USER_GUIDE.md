@@ -83,6 +83,11 @@ FolioFlux provides a comprehensive annotation toolstrip right below the header:
 - Drag a box over sensitive information (account numbers, names, addresses).
 - Redaction burns a permanent solid black barrier directly into the PDF binary upon export, scrubbing the data completely.
 
+### Watermarks & Page Numbers
+Click the **Watermark** icon in the toolstrip to open the customization dialog:
+- **Watermark**: Enter custom text or select presets (`CONFIDENTIAL`, `DRAFT`, `DO NOT COPY`, `SAMPLE`, `INTERNAL ONLY`). Configure color (Red, Gray, Blue, Amber) and opacity (10% to 50%). FolioFlux renders a centered diagonal watermark across all pages and embeds it on export.
+- **Page Numbers**: Add formatted page numbering (e.g. `Page 1 of 10`, `1 / 10`, `- 1 -`) to the bottom-center, bottom-right, or top-right of all document pages.
+
 ---
 
 ## 3. Interactive AcroForm Filling & Flattening

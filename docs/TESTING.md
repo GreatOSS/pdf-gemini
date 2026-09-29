@@ -76,19 +76,24 @@ During interactive testing via Playwright browser and desktop computer-use tools
    - *Symptom*: Document properties were read-only, preventing users from updating Title, Author, or Keywords before sharing.
    - *Fix*: Converted the Properties dialog into an interactive editor that syncs with `pdfEngine.metadata` and embeds metadata into exported PDF binaries.
 
+10. **Document Watermark & Bates / Page Numbering**:
+   - *Requirement*: Users regularly require document-wide watermarks ("CONFIDENTIAL", "DRAFT") and automated page numbering ("Page X of Y") before publishing or sharing.
+   - *Implementation*: Added interactive Watermark & Page Numbering modal with opacity/color customization and position presets; integrated into live canvas overlays and `PDFExporter` binary compilation. Verified with automated regression tests.
+
 ---
 
 ## 4. Automated Test Suite Status
 
 ```
-✔ AnnotationsManager add, undo, and redo (1.05ms)
-✔ AnnotationsManager update and delete (0.28ms)
-✔ CLI --version and --help output (260.11ms)
-✔ CLI info on generated sample file (196.46ms)
-✔ PDF creation and page addition (27.27ms)
-✔ PDF page rotation (3.79ms)
-✔ PDF merge multiple documents (3.24ms)
-✔ PDF split document (2.05ms)
+✔ AnnotationsManager add, undo, and redo (1.06ms)
+✔ AnnotationsManager update and delete (0.31ms)
+✔ CLI --version and --help output (257.67ms)
+✔ CLI info on generated sample file (196.89ms)
+✔ PDF creation and page addition (28.66ms)
+✔ PDF page rotation (3.36ms)
+✔ PDF merge multiple documents (2.94ms)
+✔ PDF split document (1.79ms)
+✔ PDF watermark and page numbering export (11.10ms)
 
-Total: 8 tests passed, 0 failures, 0 skipped.
+Total: 9 tests passed, 0 failures, 0 skipped.
 ```

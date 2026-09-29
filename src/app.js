@@ -20,6 +20,7 @@ import { PageOrganizerModal } from './ui/page-organizer.js';
 import { PropertiesModal } from './ui/properties-dialog.js';
 import { ShortcutsModal } from './ui/shortcuts-dialog.js';
 import { TTSController } from './ui/tts-controller.js';
+import { WatermarkModal } from './ui/watermark-modal.js';
 
 export class FolioFluxApp {
   constructor() {
@@ -28,6 +29,8 @@ export class FolioFluxApp {
     this.searchEngine = new SearchEngine(this.pdfEngine);
     this.formEngine = new FormEngine(this.pdfEngine);
 
+    this.watermark = null;
+    this.pageNumbers = null;
     this.isDarkMode = false;
     this.isDocInvert = false;
 
@@ -139,6 +142,29 @@ export class FolioFluxApp {
       pdfEngine: this.pdfEngine,
       getCurrentPage: () => this.canvasView.currentPage,
     });
+
+    this.watermarkModal = new WatermarkModal({
+      onApplyWatermark: (wm) => {
+        this.watermark = wm;
+        this.canvasView.setWatermark(wm);
+        this.showToast(`Watermark "${wm.text}" applied!`);
+      },
+      onRemoveWatermark: () => {
+        this.watermark = null;
+        this.canvasView.setWatermark(null);
+        this.showToast('Watermark removed.');
+      },
+      onApplyPageNumbers: (pn) => {
+        this.pageNumbers = pn;
+        this.canvasView.setPageNumbers(pn);
+        this.showToast('Page numbering applied!');
+      },
+      onRemovePageNumbers: () => {
+        this.pageNumbers = null;
+        this.canvasView.setPageNumbers(null);
+        this.showToast('Page numbering removed.');
+      },
+    });
   }
 
   async handleToolbarAction(action, data) {
@@ -146,6 +172,8 @@ export class FolioFluxApp {
       this.sidebar.toggleCollapse();
     } else if (action === 'open-signature-modal') {
       this.signatureModal.open();
+    } else if (action === 'open-watermark-modal') {
+      this.watermarkModal.open();
     } else if (action === 'prev-page') {
       const p = Math.max(1, this.canvasView.currentPage - 1);
       this.canvasView.scrollToPage(p);
@@ -371,6 +399,8 @@ export class FolioFluxApp {
         annotationsManager: this.annotationsManager,
         formEngine: this.formEngine,
         flattenForms: true,
+        watermark: this.watermark,
+        pageNumbers: this.pageNumbers,
       });
 
       const blob = new Blob([outputBytes], { type: 'application/pdf' });

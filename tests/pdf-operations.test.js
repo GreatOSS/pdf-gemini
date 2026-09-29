@@ -60,3 +60,32 @@ test('PDF split document', async () => {
   const loaded = await PDFDocument.load(bytes);
   assert.strictEqual(loaded.getPageCount(), 1, 'Split document should have 1 page');
 });
+
+test('PDF watermark and page numbering export', async () => {
+  const { PDFExporter } = await import('../src/core/pdf-exporter.js');
+  const doc = await PDFDocument.create();
+  doc.addPage([600, 800]);
+  doc.addPage([600, 800]);
+  const rawBytes = await doc.save();
+
+  const mockPdfEngine = {
+    rawData: rawBytes,
+    pageOrder: [0, 1],
+    pageRotations: new Map(),
+    metadata: { title: 'Watermarked Doc', author: 'FolioFlux Author' },
+  };
+
+  const exportedBytes = await PDFExporter.exportDocument({
+    pdfEngine: mockPdfEngine,
+    annotationsManager: null,
+    formEngine: null,
+    watermark: { text: 'CONFIDENTIAL', color: '#dc2626', opacity: 0.3 },
+    pageNumbers: { format: 'Page {page} of {total}', position: 'bottom-center' },
+  });
+
+  assert.ok(exportedBytes.length > 1000, 'Should produce valid watermarked PDF');
+  const verifyDoc = await PDFDocument.load(exportedBytes);
+  assert.strictEqual(verifyDoc.getPageCount(), 2, 'Should have 2 pages');
+  assert.strictEqual(verifyDoc.getTitle(), 'Watermarked Doc');
+  assert.strictEqual(verifyDoc.getAuthor(), 'FolioFlux Author');
+});
