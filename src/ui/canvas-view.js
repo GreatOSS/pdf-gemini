@@ -590,6 +590,7 @@ export class CanvasView {
         box.style.fontSize = `${(ann.fontSize || 14) * this.scale}px`;
         box.style.color = ann.color || '#0f172a';
         box.innerHTML = `<div class="canvas-textbox-content" contenteditable="true">${ann.text}</div>`;
+        this.attachDragHandler(box, ann, pageIndex);
         overlayLayer.appendChild(box);
       } else if (ann.type === 'note') {
         const note = document.createElement('div');
@@ -601,6 +602,7 @@ export class CanvasView {
         note.addEventListener('click', () => {
           alert(`Sticky Note:\n\n${ann.text}`);
         });
+        this.attachDragHandler(note, ann, pageIndex);
         overlayLayer.appendChild(note);
       } else if (ann.type === 'stamp') {
         const stamp = document.createElement('div');
@@ -610,6 +612,7 @@ export class CanvasView {
         stamp.style.top = `${ann.y * this.scale}px`;
         stamp.style.fontSize = `${16 * this.scale}px`;
         stamp.textContent = (ann.stampType || 'APPROVED').toUpperCase();
+        this.attachDragHandler(stamp, ann, pageIndex);
         overlayLayer.appendChild(stamp);
       } else if (ann.type === 'signature' && ann.dataUrl) {
         const sig = document.createElement('div');
@@ -618,6 +621,7 @@ export class CanvasView {
         sig.style.top = `${ann.y * this.scale}px`;
         sig.style.width = `${(ann.width || 160) * this.scale}px`;
         sig.innerHTML = `<img src="${ann.dataUrl}" alt="Signature" />`;
+        this.attachDragHandler(sig, ann, pageIndex);
         overlayLayer.appendChild(sig);
       } else if (ann.type === 'redaction') {
         const red = document.createElement('div');
@@ -630,6 +634,51 @@ export class CanvasView {
         overlayLayer.appendChild(red);
       }
     }
+  }
+
+  attachDragHandler(element, ann, pageIndex) {
+    let isDragging = false;
+    let startX = 0, startY = 0;
+    let initLeft = 0, initTop = 0;
+
+    element.addEventListener('mousedown', (e) => {
+      if (e.target.isContentEditable) return;
+      if (e.button !== 0) return;
+      e.stopPropagation();
+
+      isDragging = true;
+      startX = e.clientX;
+      startY = e.clientY;
+      initLeft = parseFloat(element.style.left) || 0;
+      initTop = parseFloat(element.style.top) || 0;
+      element.style.zIndex = '35';
+
+      const onMouseMove = (moveEvt) => {
+        if (!isDragging) return;
+        const dx = moveEvt.clientX - startX;
+        const dy = moveEvt.clientY - startY;
+        element.style.left = `${initLeft + dx}px`;
+        element.style.top = `${initTop + dy}px`;
+      };
+
+      const onMouseUp = () => {
+        if (!isDragging) return;
+        isDragging = false;
+        element.style.zIndex = '';
+        window.removeEventListener('mousemove', onMouseMove);
+        window.removeEventListener('mouseup', onMouseUp);
+
+        const finalLeft = parseFloat(element.style.left) || 0;
+        const finalTop = parseFloat(element.style.top) || 0;
+        this.annotationsManager.updateAnnotation(pageIndex, ann.id, {
+          x: finalLeft / this.scale,
+          y: finalTop / this.scale,
+        });
+      };
+
+      window.addEventListener('mousemove', onMouseMove);
+      window.addEventListener('mouseup', onMouseUp);
+    });
   }
 
   renderAllAnnotations() {

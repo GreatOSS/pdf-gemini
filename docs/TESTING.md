@@ -68,6 +68,14 @@ During interactive testing via Playwright browser and desktop computer-use tools
    - *Symptom*: Users needed straightforward ways to export pages as PNGs, plain text, and form data JSON without navigating multi-level menus.
    - *Fix*: Integrated direct "Samples ▾" and "Export ▾" native dropdowns into the top header toolbar, keeping the entire interface compact on 1280px displays.
 
+8. **Direct Drag-and-Drop Repositioning of Placed Annotations**:
+   - *Symptom*: After placing rubber stamps, digital signatures, or text boxes, users could not easily nudge or reposition them.
+   - *Fix*: Implemented native drag handlers on annotation elements that update coordinates in `AnnotationsManager` and support undo/redo.
+
+9. **Editable Document Properties & Metadata**:
+   - *Symptom*: Document properties were read-only, preventing users from updating Title, Author, or Keywords before sharing.
+   - *Fix*: Converted the Properties dialog into an interactive editor that syncs with `pdfEngine.metadata` and embeds metadata into exported PDF binaries.
+
 ---
 
 ## 4. Automated Test Suite Status

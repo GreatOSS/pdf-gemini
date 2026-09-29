@@ -123,7 +123,17 @@ export class FolioFluxApp {
       },
     });
 
-    this.propertiesModal = new PropertiesModal({ pdfEngine: this.pdfEngine });
+    this.propertiesModal = new PropertiesModal({
+      pdfEngine: this.pdfEngine,
+      onSave: (meta) => {
+        this.toolbar.setDocumentInfo({
+          title: meta.title,
+          numPages: this.pdfEngine.numPages,
+          currentPage: this.canvasView.currentPage,
+        });
+        this.showToast('Document metadata updated!');
+      },
+    });
     this.shortcutsModal = new ShortcutsModal();
     this.ttsController = new TTSController({
       pdfEngine: this.pdfEngine,

@@ -250,7 +250,13 @@ export class PDFExporter {
     }
 
     // Set PDF metadata
-    doc.setTitle(pdfEngine.metadata?.title || 'FolioFlux Document');
+    if (pdfEngine.metadata?.title) doc.setTitle(pdfEngine.metadata.title);
+    if (pdfEngine.metadata?.author) doc.setAuthor(pdfEngine.metadata.author);
+    if (pdfEngine.metadata?.subject) doc.setSubject(pdfEngine.metadata.subject);
+    if (pdfEngine.metadata?.keywords) {
+      const kw = pdfEngine.metadata.keywords.split(',').map(k => k.trim()).filter(Boolean);
+      if (kw.length > 0) doc.setKeywords(kw);
+    }
     doc.setProducer('FolioFlux PDF Engine');
     doc.setCreator('FolioFlux — https://github.com/GreatOSS/pdf-gemini');
 
