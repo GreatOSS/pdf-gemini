@@ -94,20 +94,26 @@ export class PageOrganizerModal {
       tile.innerHTML = `
         <div class="thumbnail-footer" style="margin-top: 8px;">
           <span style="font-weight: 700;">Page ${i + 1}</span>
-          <div style="display: flex; gap: 4px;">
+          <div style="display: flex; gap: 2px;">
+            <button class="btn-icon btn-move-left" title="Move Left" data-index="${i}" ${i === 0 ? 'disabled style="opacity: 0.3;"' : ''}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            </button>
+            <button class="btn-icon btn-move-right" title="Move Right" data-index="${i}" ${i === this.pdfEngine.numPages - 1 ? 'disabled style="opacity: 0.3;"' : ''}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><polyline points="9 18 15 12 9 6"></polyline></svg>
+            </button>
             <button class="btn-icon btn-rotate-cw" title="Rotate CW" data-index="${i}">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12">
                 <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path>
               </svg>
             </button>
             <button class="btn-icon btn-dup" title="Duplicate Page" data-index="${i}">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12">
                 <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
                 <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
               </svg>
             </button>
             <button class="btn-icon btn-del" title="Delete Page" data-index="${i}">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12">
                 <polyline points="3 6 5 6 21 6"></polyline>
                 <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
               </svg>
@@ -118,6 +124,47 @@ export class PageOrganizerModal {
 
       tile.prepend(canvas);
       grid.appendChild(tile);
+
+      const leftBtn = tile.querySelector('.btn-move-left');
+      if (leftBtn && i > 0) {
+        leftBtn.addEventListener('click', () => {
+          this.pdfEngine.reorderPage(i, i - 1);
+          this.refreshGrid();
+        });
+      }
+
+      const rightBtn = tile.querySelector('.btn-move-right');
+      if (rightBtn && i < this.pdfEngine.numPages - 1) {
+        rightBtn.addEventListener('click', () => {
+          this.pdfEngine.reorderPage(i, i + 1);
+          this.refreshGrid();
+        });
+      }
+
+      tile.draggable = true;
+      tile.addEventListener('dragstart', (e) => {
+        e.dataTransfer.setData('text/plain', String(i));
+        tile.style.opacity = '0.5';
+      });
+      tile.addEventListener('dragend', () => {
+        tile.style.opacity = '1.0';
+      });
+      tile.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        tile.style.border = '2px dashed var(--primary)';
+      });
+      tile.addEventListener('dragleave', () => {
+        tile.style.border = '2px solid transparent';
+      });
+      tile.addEventListener('drop', (e) => {
+        e.preventDefault();
+        tile.style.border = '2px solid transparent';
+        const srcIndex = parseInt(e.dataTransfer.getData('text/plain'), 10);
+        if (!isNaN(srcIndex) && srcIndex !== i) {
+          this.pdfEngine.reorderPage(srcIndex, i);
+          this.refreshGrid();
+        }
+      });
 
       tile.querySelector('.btn-rotate-cw').addEventListener('click', () => {
         this.pdfEngine.rotatePage(i, 90);
