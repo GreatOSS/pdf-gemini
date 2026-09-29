@@ -207,6 +207,24 @@ export class Toolbar {
             <option value="json">Form Data (.json)</option>
           </select>
 
+          <!-- Print Document -->
+          <button id="btn-print-doc" class="btn-icon" data-tooltip="Print Document (Ctrl+P)" title="Print Document">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="6 9 6 2 18 2 18 9"></polyline>
+              <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+              <rect x="6" y="14" width="12" height="8"></rect>
+            </svg>
+          </button>
+
+          <!-- Document Properties -->
+          <button id="btn-doc-props" class="btn-icon" data-tooltip="Document Properties (Ctrl+I)" title="Document Properties">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="16" x2="12" y2="12"></line>
+              <line x1="12" y1="8" x2="12.01" y2="8"></line>
+            </svg>
+          </button>
+
           <!-- Help & Shortcuts Menu -->
           <button id="btn-more-options" class="btn-icon" data-tooltip="Help & Shortcuts (?)" title="Help">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -447,8 +465,20 @@ export class Toolbar {
     // Save
     this.container.querySelector('#btn-save-pdf').addEventListener('click', () => this.onAction('save-pdf'));
 
-    // More Options / Shortcuts modal
-    this.container.querySelector('#btn-more-options').addEventListener('click', () => this.onAction('show-options-menu'));
+    // Print Document
+    const printBtn = this.container.querySelector('#btn-print-doc');
+    if (printBtn) {
+      printBtn.addEventListener('click', () => this.onAction('print-document'));
+    }
+
+    // Document Properties
+    const docPropsBtn = this.container.querySelector('#btn-doc-props');
+    if (docPropsBtn) {
+      docPropsBtn.addEventListener('click', () => this.onAction('show-properties'));
+    }
+
+    // Help & Shortcuts modal
+    this.container.querySelector('#btn-more-options').addEventListener('click', () => this.onAction('show-shortcuts'));
 
     // Doc title editing
     this.container.querySelector('#doc-title-input').addEventListener('change', (e) => {

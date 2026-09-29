@@ -100,6 +100,25 @@ During interactive testing via Playwright browser and desktop computer-use tools
    - *Requirement*: Enable fast command-line extraction of plain text from multi-page PDFs to stdout or formatted files.
    - *Implementation*: Added `folioflux extract-text` CLI subcommand with standardFontDataUrl resolution, supporting batch piping and shell scripts. Verified with automated regression tests.
 
+16. **Password-Protected & Encrypted PDF Support**:
+   - *Requirement*: Handle opening password-protected / encrypted PDF files seamlessly without crashing or unhelpful errors.
+   - *Implementation*: Created `PasswordModal` with show/hide password toggle, real-time error banner ("Incorrect password, please try again"), and hooked into PDF.js `onPassword` callback. Decryption is performed entirely in-memory without saving cleartext or keys to disk.
+
+17. **High-Fidelity Document Printing Pipeline**:
+   - *Requirement*: Enable printing documents (`Ctrl + P`) without UI chrome, sidebars, or toolbars interfering.
+   - *Implementation*: Added dedicated Print toolbar button and `@media print` CSS rules that suppress application chrome, ensure exact page breaks between pages, and render document canvases cleanly.
+
+18. **Warm Paper / Sepia Mode & Reading Theme Cycling**:
+   - *Requirement*: Long-term readers requested an eye-care sepia mode in addition to standard inverted dark mode.
+   - *Implementation*: Added multi-state reading theme cycling (`D` key or header icon): Standard Light -> Smart Dark -> Warm Paper Sepia (`#efe6d5`).
+
+19. **Interactive Document Outline / Bookmarks Navigation**:
+   - *Requirement*: PDF documents with outlines/bookmarks should allow clicking outline items to jump to target pages.
+   - *Implementation*: Connected outline links to PDF.js destination resolver (`getDestination` and `getPageIndex`), scrolling smoothly to the target page index.
+
+20. **Universal Escape Key & Backdrop Dismiss**:
+   - *Improvement*: Ensured all application modal dialogs (Shortcuts, Properties, Password, Watermark, Organizer, Signature) dismiss on backdrop click and `Escape` key press.
+
 ---
 
 ## 4. Automated Test Suite Status
@@ -107,15 +126,18 @@ During interactive testing via Playwright browser and desktop computer-use tools
 ```
 ✔ AnnotationsManager add, undo, and redo (0.94ms)
 ✔ AnnotationsManager update and delete (0.26ms)
-✔ CLI --version and --help output (246.05ms)
-✔ CLI info on generated sample file (190.74ms)
-✔ CLI extract-text from document (304.41ms)
-✔ PDF creation and page addition (26.78ms)
-✔ PDF page rotation (3.25ms)
-✔ PDF merge multiple documents (2.73ms)
-✔ PDF split document (1.73ms)
-✔ PDF watermark and page numbering export (11.44ms)
-✔ PDF measurement annotation export (4.28ms)
+✔ CLI --version and --help output (280.81ms)
+✔ CLI info on generated sample file (187.20ms)
+✔ CLI extract-text from document (299.50ms)
+✔ PDF metadata updating and retrieval (45.91ms)
+✔ PDF multi-page outline / bookmark generation compatibility (5.35ms)
+✔ Password-protected PDF detection interface (112.32ms)
+✔ PDF creation and page addition (28.61ms)
+✔ PDF page rotation (3.85ms)
+✔ PDF merge multiple documents (2.89ms)
+✔ PDF split document (2.09ms)
+✔ PDF watermark and page numbering export (13.06ms)
+✔ PDF measurement annotation export (6.31ms)
 
-Total: 11 tests passed, 0 failures, 0 skipped.
+Total: 14 tests passed, 0 failures, 0 skipped.
 ```

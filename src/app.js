@@ -21,6 +21,7 @@ import { PropertiesModal } from './ui/properties-dialog.js';
 import { ShortcutsModal } from './ui/shortcuts-dialog.js';
 import { TTSController } from './ui/tts-controller.js';
 import { WatermarkModal } from './ui/watermark-modal.js';
+import { PasswordModal } from './ui/password-dialog.js';
 
 export class FolioFluxApp {
   constructor() {
@@ -33,6 +34,7 @@ export class FolioFluxApp {
     this.pageNumbers = null;
     this.isDarkMode = false;
     this.isDocInvert = false;
+    this.readingMode = 'light'; // light, dark, sepia
 
     this.initUI();
     this.bindKeyboardShortcuts();
@@ -144,6 +146,7 @@ export class FolioFluxApp {
       },
     });
     this.shortcutsModal = new ShortcutsModal();
+    this.passwordModal = new PasswordModal();
     this.ttsController = new TTSController({
       pdfEngine: this.pdfEngine,
       getCurrentPage: () => this.canvasView.currentPage,
@@ -212,7 +215,13 @@ export class FolioFluxApp {
     } else if (action === 'toggle-tts') {
       this.ttsController.toggle();
     } else if (action === 'toggle-dark') {
-      this.toggleReadingDark();
+      this.cycleReadingMode();
+    } else if (action === 'show-properties') {
+      this.propertiesModal.open();
+    } else if (action === 'print-document') {
+      this.printDocument();
+    } else if (action === 'show-shortcuts') {
+      this.shortcutsModal.open();
     } else if (action === 'toggle-presentation') {
       this.togglePresentationMode();
     } else if (action === 'load-sample') {
@@ -268,7 +277,16 @@ export class FolioFluxApp {
     this.hideWelcome();
     this.annotationsManager.clear();
 
-    const meta = await this.pdfEngine.loadDocument(bytes, fileName);
+    const onPassword = async (updatePassword, reason) => {
+      try {
+        const pwd = await this.passwordModal.prompt(reason);
+        updatePassword(pwd);
+      } catch {
+        updatePassword(new Error('Password prompt cancelled.'));
+      }
+    };
+
+    const meta = await this.pdfEngine.loadDocument(bytes, fileName, onPassword);
     await this.formEngine.loadFields();
 
     this.toolbar.setDocumentInfo({
@@ -439,11 +457,28 @@ export class FolioFluxApp {
     window.print();
   }
 
-  toggleReadingDark() {
-    this.isDocInvert = !this.isDocInvert;
-    document.body.classList.toggle('doc-invert', this.isDocInvert);
-    document.body.setAttribute('data-theme', this.isDocInvert ? 'dark' : 'light');
-    this.showToast(this.isDocInvert ? 'Dark Reading Mode ON' : 'Standard Reading Mode ON');
+  cycleReadingMode() {
+    if (!this.readingMode || this.readingMode === 'light') {
+      this.readingMode = 'dark';
+      this.isDocInvert = true;
+      document.body.classList.remove('doc-sepia');
+      document.body.classList.add('doc-invert');
+      document.body.setAttribute('data-theme', 'dark');
+      this.showToast('Smart Dark Reading Mode ON');
+    } else if (this.readingMode === 'dark') {
+      this.readingMode = 'sepia';
+      this.isDocInvert = false;
+      document.body.classList.remove('doc-invert');
+      document.body.classList.add('doc-sepia');
+      document.body.setAttribute('data-theme', 'light');
+      this.showToast('Warm Paper / Sepia Mode ON');
+    } else {
+      this.readingMode = 'light';
+      this.isDocInvert = false;
+      document.body.classList.remove('doc-invert', 'doc-sepia');
+      document.body.setAttribute('data-theme', 'light');
+      this.showToast('Standard Reading Mode');
+    }
   }
 
   togglePresentationMode() {
@@ -503,12 +538,7 @@ export class FolioFluxApp {
   }
 
   showOptionsMenu() {
-    const choice = prompt('Options:\n1: Document Properties\n2: Keyboard Shortcuts\n3: Load Interactive NDA Form\n4: Load Quickstart Tour\n5: Print Document\n\nEnter number (1-5):', '1');
-    if (choice === '1') this.propertiesModal.open();
-    else if (choice === '2') this.shortcutsModal.open();
-    else if (choice === '3') this.loadSampleContract();
-    else if (choice === '4') this.loadSampleTour();
-    else if (choice === '5') this.printDocument();
+    this.shortcutsModal.open();
   }
 
   bindKeyboardShortcuts() {
@@ -528,6 +558,9 @@ export class FolioFluxApp {
         } else if (e.key === 'p' || e.key === 'P') {
           e.preventDefault();
           this.printDocument();
+        } else if (e.key === 'i' || e.key === 'I') {
+          e.preventDefault();
+          this.propertiesModal.open();
         } else if (e.key === 'f' || e.key === 'F') {
           e.preventDefault();
           this.searchBar.open();
@@ -540,7 +573,10 @@ export class FolioFluxApp {
           this.annotationsManager.redo();
         }
       } else {
-        if (e.key === '+' || e.key === '=') {
+        if (e.key === '?' || e.key === 'F1') {
+          e.preventDefault();
+          this.shortcutsModal.open();
+        } else if (e.key === '+' || e.key === '=') {
           this.handleToolbarAction('zoom-in');
         } else if (e.key === '-') {
           this.handleToolbarAction('zoom-out');
@@ -551,7 +587,7 @@ export class FolioFluxApp {
         } else if (e.key === 'PageUp' || e.key === '[') {
           this.handleToolbarAction('prev-page');
         } else if (e.key === 'd' || e.key === 'D') {
-          this.toggleReadingDark();
+          this.cycleReadingMode();
         } else if (e.key === 'b' || e.key === 'B') {
           this.sidebar.toggleCollapse();
         } else if (e.key === 'h' || e.key === 'H') {
@@ -562,6 +598,13 @@ export class FolioFluxApp {
           this.togglePresentationMode();
         } else if (e.key === 'Escape') {
           if (this.isPresentationMode) this.togglePresentationMode();
+          this.shortcutsModal.close();
+          this.propertiesModal.close();
+          this.passwordModal?.close();
+          this.watermarkModal?.close();
+          this.organizerModal?.close();
+          this.signatureModal?.close();
+          this.searchBar?.close();
         } else if (e.key === 'ArrowRight' || (e.key === ' ' && this.isPresentationMode)) {
           this.handleToolbarAction('next-page');
         } else if (e.key === 'ArrowLeft') {

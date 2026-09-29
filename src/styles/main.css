@@ -70,6 +70,15 @@ body.doc-invert .page-canvas-wrapper canvas.page-pdf-canvas {
   filter: invert(0.92) hue-rotate(180deg) contrast(1.05);
 }
 
+/* Document Warm Paper / Sepia Mode Reading */
+body.doc-sepia {
+  --bg-canvas: #efe6d5;
+}
+
+body.doc-sepia .page-canvas-wrapper canvas.page-pdf-canvas {
+  filter: sepia(0.38) contrast(0.95) brightness(0.98);
+}
+
 * {
   box-sizing: border-box;
   margin: 0;
@@ -1148,4 +1157,109 @@ body.presentation-mode:hover .presentation-hud,
 
 .presentation-hud button:hover {
   background-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Document Outline Navigation */
+.outline-tree {
+  list-style: none;
+  padding-left: 12px;
+  margin: 0;
+}
+
+.outline-item {
+  margin: 3px 0;
+}
+
+.outline-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 8px;
+  border-radius: 6px;
+  color: var(--text-main);
+  text-decoration: none;
+  cursor: pointer;
+  font-size: 13px;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.outline-link:hover {
+  background-color: var(--bg-surface-hover);
+  color: var(--primary);
+}
+
+/* Print Stylesheet for High-Quality Clean Document Printing */
+@media print {
+  @page {
+    margin: 0;
+    size: auto;
+  }
+
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  .app-header,
+  .toolstrip,
+  .app-sidebar,
+  .floating-search-bar,
+  .presentation-hud,
+  .toast,
+  .modal-overlay,
+  .resize-handle,
+  .page-selection-box,
+  .page-num-badge,
+  .ruler-guide,
+  #welcome-overlay {
+    display: none !important;
+  }
+
+  #app,
+  .app-body,
+  .canvas-view {
+    display: block !important;
+    position: static !important;
+    overflow: visible !important;
+    width: 100% !important;
+    height: auto !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: transparent !important;
+  }
+
+  .page-container {
+    box-shadow: none !important;
+    border: none !important;
+    margin: 0 auto !important;
+    page-break-after: always !important;
+    break-after: page !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: auto !important;
+    display: block !important;
+  }
+
+  .page-canvas-wrapper {
+    width: 100% !important;
+    height: auto !important;
+    margin: 0 auto !important;
+  }
+
+  canvas.page-pdf-canvas {
+    filter: none !important;
+    max-width: 100% !important;
+    height: auto !important;
+    display: block !important;
+    margin: 0 auto !important;
+  }
+
+  .annotation-layer-svg,
+  .form-layer {
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+  }
 }

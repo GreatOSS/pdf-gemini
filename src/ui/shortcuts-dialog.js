@@ -34,13 +34,16 @@ export class ShortcutsModal {
               <strong>Ctrl + P</strong>: Print Document
             </div>
             <div style="background: var(--bg-surface-secondary); padding: 8px 12px; border-radius: 6px;">
+              <strong>Ctrl + I</strong>: Document Properties
+            </div>
+            <div style="background: var(--bg-surface-secondary); padding: 8px 12px; border-radius: 6px;">
               <strong>Ctrl + F</strong>: Find / Search
             </div>
             <div style="background: var(--bg-surface-secondary); padding: 8px 12px; border-radius: 6px;">
-              <strong>Ctrl + Z</strong>: Undo
+              <strong>Ctrl + Z / Y</strong>: Undo / Redo
             </div>
             <div style="background: var(--bg-surface-secondary); padding: 8px 12px; border-radius: 6px;">
-              <strong>Ctrl + Y</strong>: Redo
+              <strong>? / F1</strong>: Help & Shortcuts
             </div>
             <div style="background: var(--bg-surface-secondary); padding: 8px 12px; border-radius: 6px;">
               <strong>+ / -</strong>: Zoom In / Zoom Out
@@ -55,7 +58,7 @@ export class ShortcutsModal {
               <strong>V</strong>: Selection Tool
             </div>
             <div style="background: var(--bg-surface-secondary); padding: 8px 12px; border-radius: 6px;">
-              <strong>D</strong>: Dark Reading Mode
+              <strong>D</strong>: Reading Mode (Light/Dark/Sepia)
             </div>
             <div style="background: var(--bg-surface-secondary); padding: 8px 12px; border-radius: 6px;">
               <strong>B</strong>: Toggle Sidebar
@@ -91,6 +94,9 @@ export class ShortcutsModal {
 
     this.overlay.querySelector('.btn-close-modal').addEventListener('click', () => this.close());
     this.overlay.querySelector('#btn-close-shortcuts').addEventListener('click', () => this.close());
+    this.overlay.addEventListener('click', (e) => {
+      if (e.target === this.overlay) this.close();
+    });
   }
 
   open() {

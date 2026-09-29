@@ -22,8 +22,11 @@ export class PDFEngine {
 
   /**
    * Loads a PDF document from Uint8Array or ArrayBuffer.
+   * @param {Uint8Array|ArrayBuffer} data
+   * @param {string} name
+   * @param {Function} [onPassword] Optional callback (updatePassword, reason) for encrypted PDFs
    */
-  async loadDocument(data, name = 'document.pdf') {
+  async loadDocument(data, name = 'document.pdf', onPassword = null) {
     this.destroy();
 
     // Copy buffer to prevent detached buffer issues
@@ -44,6 +47,10 @@ export class PDFEngine {
       cMapPacked: true,
       standardFontDataUrl: '/standard_fonts/',
     });
+
+    if (typeof onPassword === 'function') {
+      loadingTask.onPassword = onPassword;
+    }
 
     this.pdfDoc = await loadingTask.promise;
     this.numPages = this.pdfDoc.numPages;

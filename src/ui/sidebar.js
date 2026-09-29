@@ -237,7 +237,7 @@ export class Sidebar {
       let html = '<ul class="outline-tree">';
       for (const item of items) {
         html += `<li class="outline-item">
-          <a class="outline-link" data-dest="${item.dest ? JSON.stringify(item.dest) : ''}">
+          <a class="outline-link" data-dest='${item.dest ? JSON.stringify(item.dest) : ""}'>
             <span>📄</span>
             <span>${item.title}</span>
           </a>`;
@@ -251,6 +251,30 @@ export class Sidebar {
     };
 
     container.innerHTML = renderItems(outline);
+
+    container.querySelectorAll('.outline-link').forEach(link => {
+      link.addEventListener('click', async (e) => {
+        e.preventDefault();
+        const destRaw = link.dataset.dest;
+        if (!destRaw || !this.pdfEngine?.pdfDoc) return;
+        try {
+          let dest = JSON.parse(destRaw);
+          if (typeof dest === 'string') {
+            dest = await this.pdfEngine.pdfDoc.getDestination(dest);
+          }
+          if (Array.isArray(dest) && dest[0]) {
+            const pageRef = dest[0];
+            const pageIndex = await this.pdfEngine.pdfDoc.getPageIndex(pageRef);
+            const displayIndex = this.pdfEngine.pageOrder.indexOf(pageIndex);
+            if (displayIndex !== -1) {
+              this.onAction('goto-page', displayIndex + 1);
+            }
+          }
+        } catch (err) {
+          console.error('Failed to navigate outline item:', err);
+        }
+      });
+    });
   }
 
   renderAnnotations(container) {

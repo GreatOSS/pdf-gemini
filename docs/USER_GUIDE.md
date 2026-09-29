@@ -27,11 +27,24 @@ FolioFlux is a fast, beautiful, and privacy-first open-source PDF viewer and edi
   - Fit to Page
   - Percentage presets (50%, 75%, 100%, 125%, 150%, 200%)
 
-### Smart Dark Mode & Inverted Reading
-Click the **Moon/Dark Mode** button (`D`) to activate Smart Inverted Reading Mode:
-- Inverts white document backgrounds into comfortable dark slate.
-- Preserves natural color balances on embedded images and photos.
-- Eases eye strain during long reading sessions in low-light environments.
+### Smart Dark Mode & Reading Themes
+Press `D` or click the **Reading Mode** button to cycle through reading themes:
+- **Standard Light**: Clean, true-to-life presentation.
+- **Smart Dark Reading Mode**: Inverts white document backgrounds into comfortable dark slate while preserving natural color balances on images.
+- **Warm Paper / Sepia Mode**: Applies an eye-friendly warm paper tone (`#efe6d5`) with soft sepia contrast, ideal for reading long books and technical documents without eye strain.
+
+### Password-Protected & Encrypted Documents
+FolioFlux automatically detects password-encrypted PDFs:
+- Prompts with a secure unlock dialog on open.
+- Supports show/hide password toggle.
+- Clear error notification on incorrect attempts.
+- Smoothly unlocks and displays encrypted files in-memory without storing passwords or unencrypted files to disk.
+
+### Document Properties & Metadata
+Press `Ctrl + I` or click the **Info (`i`)** button in the header:
+- View and update Title, Author, Subject, and Keywords.
+- Inspect page count, producer, and creation details.
+- Edited metadata is automatically embedded when saving or exporting.
 
 ### Presentation Mode
 Click the **Presentation Mode** button (`P`):
@@ -166,7 +179,8 @@ Click **Organize** in the header or use the **Pages** sidebar tab:
 | :--- | :--- |
 | `Ctrl + O` | Open PDF file |
 | `Ctrl + S` | Save & Download modified PDF |
-| `Ctrl + P` | Print document |
+| `Ctrl + P` | Print document cleanly |
+| `Ctrl + I` | Document Properties & Metadata dialog |
 | `Ctrl + F` | Find in document |
 | `Ctrl + Z` | Undo last annotation / edit |
 | `Ctrl + Y` | Redo undone action |
@@ -177,9 +191,9 @@ Click **Organize** in the header or use the **Pages** sidebar tab:
 | `H` | Hand (Pan) tool |
 | `V` | Selection cursor tool |
 | `P` | Toggle Presentation Mode |
-| `D` | Toggle Smart Dark Reading Mode |
+| `D` | Cycle Reading Mode (Light / Dark / Sepia) |
 | `B` | Toggle Sidebar |
 | `Home` / `End` | Jump to First / Last page |
 | `j` / `k` | Scroll down / up smoothly |
-| `?` | Open Help & Shortcuts dialog |
+| `?` / `F1` | Open Help & Shortcuts dialog |
 | `Escape` | Close active dialog or exit presentation |

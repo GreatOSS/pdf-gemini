@@ -39,6 +39,9 @@ export class PropertiesModal {
 
     this.overlay.querySelector('.btn-close-modal').addEventListener('click', () => this.close());
     this.overlay.querySelector('#btn-cancel-properties').addEventListener('click', () => this.close());
+    this.overlay.addEventListener('click', (e) => {
+      if (e.target === this.overlay) this.close();
+    });
     this.overlay.querySelector('#btn-save-properties').addEventListener('click', () => {
       const title = this.overlay.querySelector('#prop-title')?.value.trim();
       const author = this.overlay.querySelector('#prop-author')?.value.trim();
