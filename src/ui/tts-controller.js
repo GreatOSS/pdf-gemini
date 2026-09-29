@@ -51,7 +51,9 @@ export class TTSController {
 
   async togglePlay() {
     if (!this.synth) {
-      alert('Speech synthesis is not supported in this browser.');
+      if (typeof window.showToast === 'function') {
+        window.showToast('Speech synthesis is not supported in this browser.', 'warning');
+      }
       return;
     }
 
@@ -73,7 +75,9 @@ export class TTSController {
     const fullText = textContent.items.map(i => i.str).join(' ');
 
     if (!fullText.trim()) {
-      alert('No text content found on this page to read aloud.');
+      if (typeof window.showToast === 'function') {
+        window.showToast('No text content found on this page to read aloud.', 'warning');
+      }
       return;
     }
 

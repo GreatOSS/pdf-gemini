@@ -150,6 +150,10 @@ During interactive testing via Playwright browser and desktop computer-use tools
    - *Requirement*: Eliminate alert interruptions when stamping signatures without pre-drawn signatures, placing them directly at the targeted point upon creation.
    - *Implementation*: Connected `onOpenSignatureModal(pageIndex, pt)` in `CanvasView` to store target coordinates and auto-stamp the created signature upon applying; added backdrop click-to-close on `SignatureModal`. Verified on DISPLAY=:101.
 
+29. **Complete Elimination of Blocking Browser Alerts**:
+   - *Requirement*: Replace all remaining synchronous `alert(...)` dialogs across the application with non-blocking, accessible toast notifications.
+   - *Implementation*: Replaced all alerts in `app.js`, `page-organizer.js`, `signature-modal.js`, and `tts-controller.js` with `showToast(msg, type)` supporting `info`, `warning`, `error`, and `success` styling (`toast-warning`, `toast-error`). Verified single-page deletion prevention and file export errors.
+
 ---
 
 ## 4. Automated Test Suite Status

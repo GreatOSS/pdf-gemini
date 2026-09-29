@@ -36,6 +36,8 @@ export class FolioFluxApp {
     this.isDocInvert = false;
     this.readingMode = 'light'; // light, dark, sepia
 
+    window.showToast = this.showToast.bind(this);
+
     this.initUI();
     this.bindKeyboardShortcuts();
     this.bindDropZone();
@@ -271,7 +273,7 @@ export class FolioFluxApp {
       this.sidebar.updateContent();
     } else if (action === 'delete-page') {
       if (this.pdfEngine.numPages <= 1) {
-        alert('Cannot delete the only page in the document.');
+        this.showToast('Cannot delete the only page in the document.', 'warning');
         return;
       }
       this.pdfEngine.deletePage(data);
@@ -384,7 +386,7 @@ export class FolioFluxApp {
       }, 'image/png');
     } catch (err) {
       console.error('Export image error:', err);
-      alert('Failed to export image: ' + err.message);
+      this.showToast('Failed to export image: ' + err.message, 'error');
     }
   }
 
@@ -413,7 +415,7 @@ export class FolioFluxApp {
       this.showToast('Document text exported as .txt!');
     } catch (err) {
       console.error('Export text error:', err);
-      alert('Failed to extract text: ' + err.message);
+      this.showToast('Failed to extract text: ' + err.message, 'error');
     }
   }
 
@@ -434,7 +436,7 @@ export class FolioFluxApp {
       this.showToast('Form data exported as JSON!');
     } catch (err) {
       console.error('Export form data error:', err);
-      alert('Failed to export form data: ' + err.message);
+      this.showToast('Failed to export form data: ' + err.message, 'error');
     }
   }
 
@@ -464,7 +466,7 @@ export class FolioFluxApp {
       this.showToast('PDF successfully saved & downloaded!');
     } catch (err) {
       console.error('Failed to save PDF:', err);
-      alert('Error saving PDF: ' + err.message);
+      this.showToast('Error saving PDF: ' + err.message, 'error');
     }
   }
 
@@ -666,7 +668,7 @@ export class FolioFluxApp {
     });
   }
 
-  showToast(message) {
+  showToast(message, type = 'info') {
     let container = document.getElementById('toast-container');
     if (!container) {
       container = document.createElement('div');
@@ -676,7 +678,7 @@ export class FolioFluxApp {
     }
 
     const toast = document.createElement('div');
-    toast.className = 'toast';
+    toast.className = `toast ${type === 'error' ? 'toast-error' : type === 'warning' ? 'toast-warning' : type === 'success' ? 'toast-success' : ''}`;
     toast.textContent = message;
     container.appendChild(toast);
 

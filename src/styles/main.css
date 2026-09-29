@@ -1128,6 +1128,21 @@ button, input, select, textarea {
   pointer-events: auto;
 }
 
+.toast.toast-error {
+  background-color: var(--danger);
+  color: #ffffff;
+}
+
+.toast.toast-warning {
+  background-color: #d97706;
+  color: #ffffff;
+}
+
+.toast.toast-success {
+  background-color: var(--success);
+  color: #ffffff;
+}
+
 @keyframes slideUp {
   from { opacity: 0; transform: translateY(12px); }
   to { opacity: 1; transform: translateY(0); }

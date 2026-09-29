@@ -187,7 +187,9 @@ export class PageOrganizerModal {
 
       tile.querySelector('.btn-del').addEventListener('click', () => {
         if (this.pdfEngine.numPages <= 1) {
-          alert('Cannot delete the only page in the document.');
+          if (typeof window.showToast === 'function') {
+            window.showToast('Cannot delete the only page in the document.', 'warning');
+          }
           return;
         }
         this.pdfEngine.deletePage(i);

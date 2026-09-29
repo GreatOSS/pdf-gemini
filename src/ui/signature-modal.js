@@ -186,7 +186,9 @@ export class SignatureModal {
 
       if (this.activeTab === 'draw') {
         if (!hasDrawn) {
-          alert('Please sign on the canvas first.');
+          if (typeof window.showToast === 'function') {
+            window.showToast('Please sign on the canvas first.', 'warning');
+          }
           return;
         }
         dataUrl = canvas.toDataURL('image/png');
@@ -203,7 +205,9 @@ export class SignatureModal {
         dataUrl = tempCanvas.toDataURL('image/png');
       } else if (this.activeTab === 'upload') {
         if (!this.uploadedDataUrl) {
-          alert('Please choose an image file first.');
+          if (typeof window.showToast === 'function') {
+            window.showToast('Please choose an image file first.', 'warning');
+          }
           return;
         }
         dataUrl = this.uploadedDataUrl;
