@@ -56,6 +56,18 @@ During interactive testing via Playwright browser and desktop computer-use tools
    - *Symptom*: After creating an initial signature, clicking the Signature tool did not offer an obvious path to edit or change the active signature.
    - *Fix*: Added a persistent "Create / Change Signature..." button in the tool suboptions strip whenever the signature tool is active.
 
+5. **Form Field Dictionary Preservation on PDF Export**:
+   - *Symptom*: Modifying AcroForm fields and saving resulted in unflattened field values because creating a fresh `PDFDocument` and using `copyPages` omitted form dictionaries.
+   - *Fix*: Applied form values and flattening directly onto the source document prior to serialization, verifying that text entries (e.g. "Acme Quantum Technologies") are permanently embedded into the output PDF stream.
+
+6. **Native Text Selection Interference during Drawing**:
+   - *Symptom*: Dragging on the page to draw rectangles or ink marks accidentally triggered browser native text selection on underlying document text.
+   - *Fix*: Dynamically suppressed `pointer-events` and `user-select` on the `textLayer` whenever non-selection drawing tools are active.
+
+7. **Multi-Format Export & Samples Menu Integration**:
+   - *Symptom*: Users needed straightforward ways to export pages as PNGs, plain text, and form data JSON without navigating multi-level menus.
+   - *Fix*: Integrated direct "Samples ▾" and "Export ▾" native dropdowns into the top header toolbar, keeping the entire interface compact on 1280px displays.
+
 ---
 
 ## 4. Automated Test Suite Status

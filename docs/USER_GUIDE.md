@@ -7,10 +7,13 @@ FolioFlux is a fast, beautiful, and privacy-first open-source PDF viewer and edi
 ## 1. Opening & Viewing Documents
 
 ### Opening Files
-- **Open Button**: Click the **Open** button in the header toolbar to select any `.pdf` file.
+- **Open Button**: Click the **Open** folder button in the header toolbar to select any `.pdf` file.
 - **Drag & Drop**: Drag any PDF file directly into the application window.
 - **CLI**: Run `folioflux document.pdf` from your terminal to launch directly into that document.
-- **Sample Documents**: Choose from pre-loaded samples (Quickstart Tour, Interactive NDA Form) to explore all features instantly.
+- **Samples Selector**: Choose from the **Samples ▾** dropdown in the header to switch instantly between:
+  - *Tour Guide*: 3-page interactive feature showcase.
+  - *Fillable NDA*: Interactive bilateral NDA contract with fillable AcroForm fields and signature block.
+  - *Blank Doc*: Create a fresh blank document for sketches and notes.
 
 ### Viewing Modes & Layouts
 - **Continuous Scroll Mode**: Seamlessly scroll down through multi-page documents.
@@ -122,6 +125,11 @@ Click **Organize** in the header or use the **Pages** sidebar tab:
 ## 7. Saving, Exporting & Printing
 
 - **Save PDF (`Ctrl + S`)**: Compiles and downloads your modified PDF document with all annotations, signatures, form values, and page rearrangements embedded.
+- **Export Formats Dropdown**:
+  - **PDF (.pdf)**: Download the compiled document.
+  - **Images (.png)**: Export high-resolution PNG renders of pages for presentations or image editors.
+  - **Text (.txt)**: Extract and download all textual content across the entire document into a formatted text file.
+  - **Form Data (.json)**: Export filled AcroForm field values as structured JSON data for programmatic workflows.
 - **Print (`Ctrl + P`)**: Sends high-resolution rendered pages directly to your system print dialog.
 - **CLI Commands**:
   - `folioflux info doc.pdf`

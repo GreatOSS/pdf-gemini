@@ -9,6 +9,7 @@ import { SearchEngine } from './core/search-engine.js';
 import { FormEngine } from './core/form-engine.js';
 import { PDFExporter } from './core/pdf-exporter.js';
 import { createTourSamplePDF, createContractSamplePDF } from './core/samples.js';
+import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
 
 import { Toolbar } from './ui/toolbar.js';
 import { Sidebar } from './ui/sidebar.js';
@@ -168,12 +169,21 @@ export class FolioFluxApp {
       this.ttsController.toggle();
     } else if (action === 'toggle-dark') {
       this.toggleReadingDark();
+    } else if (action === 'load-sample') {
+      if (data === 'tour') this.loadSampleTour();
+      else if (data === 'nda') this.loadSampleContract();
+      else if (data === 'blank') this.loadBlankDocument();
+    } else if (action === 'export-format') {
+      if (data === 'pdf') this.savePDF();
+      else if (data === 'png') this.exportImages();
+      else if (data === 'txt') this.exportText();
+      else if (data === 'json') this.exportFormData();
     } else if (action === 'open-file') {
       this.loadFile(data);
     } else if (action === 'save-pdf') {
       this.savePDF();
     } else if (action === 'show-options-menu') {
-      this.showOptionsMenu();
+      this.shortcutsModal.open();
     } else if (action === 'rename-doc') {
       if (this.pdfEngine.metadata) {
         this.pdfEngine.metadata.title = data;
@@ -240,6 +250,107 @@ export class FolioFluxApp {
   async loadSampleContract() {
     const bytes = await createContractSamplePDF();
     await this.loadDocumentBytes(bytes, 'Mutual-NDA-Interactive-Form.pdf');
+  }
+
+  async loadBlankDocument() {
+    try {
+      const doc = await PDFDocument.create();
+      const page = doc.addPage([612, 792]);
+      const font = await doc.embedFont(StandardFonts.Helvetica);
+      page.drawText('FolioFlux Blank Document', {
+        x: 50,
+        y: 740,
+        size: 18,
+        font,
+        color: rgb(0.2, 0.25, 0.35),
+      });
+      const bytes = await doc.save();
+      await this.loadDocumentBytes(bytes, 'Blank-Document.pdf');
+    } catch (err) {
+      console.error('Error creating blank doc:', err);
+    }
+  }
+
+  async exportImages() {
+    try {
+      this.showToast('Exporting current page image...');
+      const curPageIdx = this.canvasView.currentPage - 1;
+      const origIndex = this.pdfEngine.pageOrder[curPageIdx];
+      const page = await this.pdfEngine.getPage(origIndex + 1);
+      const viewport = page.getViewport({ scale: 2.0 });
+
+      const canvas = document.createElement('canvas');
+      canvas.width = viewport.width;
+      canvas.height = viewport.height;
+      const ctx = canvas.getContext('2d');
+      await page.render({ canvasContext: ctx, viewport }).promise;
+
+      canvas.toBlob((blob) => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        const title = (this.pdfEngine.metadata?.title || 'page').replace(/[^a-zA-Z0-9_-]/g, '_');
+        a.download = `${title}-page-${curPageIdx + 1}.png`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        this.showToast(`Page ${curPageIdx + 1} exported as PNG!`);
+      }, 'image/png');
+    } catch (err) {
+      console.error('Export image error:', err);
+      alert('Failed to export image: ' + err.message);
+    }
+  }
+
+  async exportText() {
+    try {
+      this.showToast('Extracting plain text...');
+      let fullText = `FolioFlux Plain Text Export\nDocument: ${this.pdfEngine.metadata?.title || 'Untitled'}\nPages: ${this.pdfEngine.numPages}\n\n`;
+
+      for (let i = 0; i < this.pdfEngine.numPages; i++) {
+        fullText += `==================== PAGE ${i + 1} ====================\n\n`;
+        const content = await this.pdfEngine.getTextContent(i);
+        const pageText = content.items.map(it => it.str).join(' ');
+        fullText += pageText + '\n\n';
+      }
+
+      const blob = new Blob([fullText], { type: 'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      const title = (this.pdfEngine.metadata?.title || 'document').replace(/[^a-zA-Z0-9_-]/g, '_');
+      a.download = `${title}-extracted-text.txt`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      this.showToast('Document text exported as .txt!');
+    } catch (err) {
+      console.error('Export text error:', err);
+      alert('Failed to extract text: ' + err.message);
+    }
+  }
+
+  exportFormData() {
+    try {
+      const data = this.formEngine.exportData();
+      const jsonStr = JSON.stringify(data, null, 2);
+      const blob = new Blob([jsonStr], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      const title = (this.pdfEngine.metadata?.title || 'form').replace(/[^a-zA-Z0-9_-]/g, '_');
+      a.download = `${title}-form-data.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      this.showToast('Form data exported as JSON!');
+    } catch (err) {
+      console.error('Export form data error:', err);
+      alert('Failed to export form data: ' + err.message);
+    }
   }
 
   async savePDF() {

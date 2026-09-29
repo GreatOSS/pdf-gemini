@@ -47,8 +47,7 @@ export class Toolbar {
           </button>
 
           <div class="doc-title-container">
-            <input type="text" id="doc-title-input" class="doc-title-input" value="Welcome to FolioFlux" title="Rename Document" />
-            <span id="doc-badge" class="doc-badge">Ready</span>
+            <input type="text" id="doc-title-input" class="doc-title-input" value="Welcome to FolioFlux" title="Rename Document" style="max-width: 140px;" />
           </div>
         </div>
 
@@ -141,14 +140,13 @@ export class Toolbar {
           </button>
 
           <!-- Organize Pages -->
-          <button id="btn-organize-pages" class="btn" data-tooltip="Organize & Reorder Pages" title="Organize Pages">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+          <button id="btn-organize-pages" class="btn-icon" data-tooltip="Organize Pages" title="Organize Pages">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <rect x="3" y="3" width="7" height="7"></rect>
               <rect x="14" y="3" width="7" height="7"></rect>
               <rect x="14" y="14" width="7" height="7"></rect>
               <rect x="3" y="14" width="7" height="7"></rect>
             </svg>
-            <span>Organize</span>
           </button>
 
           <!-- TTS Read Aloud -->
@@ -166,16 +164,23 @@ export class Toolbar {
             </svg>
           </button>
 
+          <!-- Samples Selector -->
+          <select id="select-samples" class="zoom-select" style="font-weight: 600; color: var(--primary); border: 1px solid var(--border); padding: 3px 6px; border-radius: 6px;" title="Sample Documents">
+            <option value="" disabled selected>Samples ▾</option>
+            <option value="tour">Tour Guide</option>
+            <option value="nda">Fillable NDA</option>
+            <option value="blank">Blank Doc</option>
+          </select>
+
           <!-- Open File -->
           <input type="file" id="file-input" accept=".pdf,application/pdf" style="display: none;" />
-          <button id="btn-open-file" class="btn" title="Open PDF">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+          <button id="btn-open-file" class="btn-icon" data-tooltip="Open PDF (Ctrl+O)" title="Open PDF">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
             </svg>
-            <span>Open</span>
           </button>
 
-          <!-- Save / Export -->
+          <!-- Save Button -->
           <button id="btn-save-pdf" class="btn btn-primary" title="Save Edited PDF (Ctrl+S)">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
               <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
@@ -185,12 +190,21 @@ export class Toolbar {
             <span>Save</span>
           </button>
 
-          <!-- More Options Menu -->
-          <button id="btn-more-options" class="btn-icon" title="More Options & Shortcuts">
+          <!-- Export Formats -->
+          <select id="select-export" class="zoom-select" style="border: 1px solid var(--border); padding: 3px 6px; border-radius: 6px; font-weight: 500;" title="Export Formats">
+            <option value="" disabled selected>Export ▾</option>
+            <option value="pdf">PDF (.pdf)</option>
+            <option value="png">Images (.png)</option>
+            <option value="txt">Text (.txt)</option>
+            <option value="json">Form Data (.json)</option>
+          </select>
+
+          <!-- Help & Shortcuts Menu -->
+          <button id="btn-more-options" class="btn-icon" data-tooltip="Help & Shortcuts (?)" title="Help">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="12" cy="12" r="1"></circle>
-              <circle cx="12" cy="5" r="1"></circle>
-              <circle cx="12" cy="19" r="1"></circle>
+              <circle cx="12" cy="12" r="10"></circle>
+              <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+              <line x1="12" y1="17" x2="12.01" y2="17"></line>
             </svg>
           </button>
         </div>
@@ -357,6 +371,24 @@ export class Toolbar {
 
     // Dark Mode
     this.container.querySelector('#btn-toggle-dark').addEventListener('click', () => this.onAction('toggle-dark'));
+
+    // Samples Dropdown
+    const sampleSelect = this.container.querySelector('#select-samples');
+    if (sampleSelect) {
+      sampleSelect.addEventListener('change', (e) => {
+        this.onAction('load-sample', e.target.value);
+        sampleSelect.selectedIndex = 0;
+      });
+    }
+
+    // Export Dropdown
+    const exportSelect = this.container.querySelector('#select-export');
+    if (exportSelect) {
+      exportSelect.addEventListener('change', (e) => {
+        this.onAction('export-format', e.target.value);
+        exportSelect.selectedIndex = 0;
+      });
+    }
 
     // File Open
     const fileInput = this.container.querySelector('#file-input');

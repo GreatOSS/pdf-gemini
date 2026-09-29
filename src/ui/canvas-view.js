@@ -420,11 +420,91 @@ export class CanvasView {
       textLayer.innerHTML = '';
       textLayer.style.width = `${Math.floor(viewport.width)}px`;
       textLayer.style.height = `${Math.floor(viewport.height)}px`;
+      const allowSelect = (this.activeTool === 'select');
+      textLayer.style.pointerEvents = allowSelect ? 'auto' : 'none';
+      textLayer.style.userSelect = allowSelect ? 'text' : 'none';
 
       const textContent = await this.pdfEngine.getTextContent(displayIndex);
       this.renderTextItems(textLayer, textContent, viewport);
+
+      // Render interactive AcroForm fields
+      this.renderFormFields(pageWrap, displayIndex, viewport);
     } catch {
       // Ignore if rendering cancelled
+    }
+  }
+
+  renderFormFields(pageWrap, displayIndex, viewport) {
+    if (!this.formEngine) return;
+    let formLayer = pageWrap.querySelector('.formLayer');
+    if (!formLayer) {
+      formLayer = document.createElement('div');
+      formLayer.className = 'formLayer';
+      formLayer.style.position = 'absolute';
+      formLayer.style.inset = '0';
+      formLayer.style.pointerEvents = 'none';
+      formLayer.style.zIndex = '8';
+      pageWrap.appendChild(formLayer);
+    }
+    formLayer.innerHTML = '';
+
+    const fields = this.formEngine.getFieldsForPage(displayIndex);
+    for (const field of fields) {
+      if (!field.rect) continue;
+      const vRect = viewport.convertToViewportRectangle(field.rect);
+      const left = Math.min(vRect[0], vRect[2]);
+      const top = Math.min(vRect[1], vRect[3]);
+      const width = Math.abs(vRect[0] - vRect[2]);
+      const height = Math.abs(vRect[1] - vRect[3]);
+
+      const wrapper = document.createElement('div');
+      wrapper.className = 'form-field-wrapper';
+      wrapper.style.position = 'absolute';
+      wrapper.style.pointerEvents = 'auto';
+      wrapper.style.left = `${left}px`;
+      wrapper.style.top = `${top}px`;
+      wrapper.style.width = `${width}px`;
+      wrapper.style.height = `${height}px`;
+
+      const currentVal = this.formEngine.getValue(field.fieldName) ?? field.fieldValue ?? '';
+
+      if (field.checkBox) {
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.checked = currentVal === true || currentVal === 'Yes' || currentVal === 'On' || currentVal === 'true';
+        checkbox.style.cursor = 'pointer';
+        checkbox.addEventListener('change', () => {
+          this.formEngine.setValue(field.fieldName, checkbox.checked);
+        });
+        wrapper.appendChild(checkbox);
+      } else if (field.fieldType === 'Ch' && field.options) {
+        const select = document.createElement('select');
+        select.style.fontSize = `${Math.max(10, Math.floor(height * 0.6))}px`;
+        for (const opt of field.options) {
+          const option = document.createElement('option');
+          option.value = typeof opt === 'string' ? opt : opt.exportValue || opt.displayValue;
+          option.textContent = typeof opt === 'string' ? opt : opt.displayValue;
+          if (option.value === currentVal || (Array.isArray(currentVal) && currentVal.includes(option.value))) {
+            option.selected = true;
+          }
+          select.appendChild(option);
+        }
+        select.addEventListener('change', () => {
+          this.formEngine.setValue(field.fieldName, select.value);
+        });
+        wrapper.appendChild(select);
+      } else {
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.value = Array.isArray(currentVal) ? currentVal.join('') : currentVal;
+        input.style.fontSize = `${Math.max(10, Math.floor(height * 0.62))}px`;
+        input.addEventListener('input', () => {
+          this.formEngine.setValue(field.fieldName, input.value);
+        });
+        wrapper.appendChild(input);
+      }
+
+      formLayer.appendChild(wrapper);
     }
   }
 
@@ -626,5 +706,18 @@ export class CanvasView {
     this.toolOptions = { ...this.toolOptions, ...options };
 
     this.scrollContainer.classList.toggle('hand-tool', tool === 'hand');
+
+    // Deselect any native text selection when switching away from select tool
+    if (tool !== 'select') {
+      if (window.getSelection) {
+        window.getSelection().removeAllRanges();
+      }
+    }
+
+    const allowSelect = (tool === 'select');
+    this.wrapper.querySelectorAll('.textLayer').forEach(tl => {
+      tl.style.pointerEvents = allowSelect ? 'auto' : 'none';
+      tl.style.userSelect = allowSelect ? 'text' : 'none';
+    });
   }
 }

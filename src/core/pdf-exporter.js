@@ -30,27 +30,73 @@ export class PDFExporter {
 
     // Load source document
     const srcDoc = await PDFDocument.load(pdfEngine.rawData);
-    const outDoc = await PDFDocument.create();
 
-    // Standard fonts
-    const fontRegular = await outDoc.embedFont(StandardFonts.Helvetica);
-    const fontBold = await outDoc.embedFont(StandardFonts.HelveticaBold);
+    // Apply interactive form field values and flatten on srcDoc
+    if (formEngine && formEngine.fieldValues.size > 0) {
+      try {
+        const form = srcDoc.getForm();
+        for (const [name, val] of formEngine.fieldValues.entries()) {
+          try {
+            const field = form.getFieldMaybe(name);
+            if (field) {
+              if (typeof val === 'boolean') {
+                if (val) field.check();
+                else field.uncheck();
+              } else if (typeof val === 'string') {
+                field.setText(val);
+              } else if (Array.isArray(val) && val.length > 0) {
+                field.setText(String(val[0]));
+              }
+            }
+          } catch (fErr) {
+            console.warn(`Could not set form field ${name}:`, fErr);
+          }
+        }
+        if (flattenForms) {
+          form.flatten();
+        }
+      } catch (formErr) {
+        console.warn('Form flattening error:', formErr);
+      }
+    }
 
-    // Copy pages in custom pageOrder
-    const copiedPages = await outDoc.copyPages(srcDoc, pdfEngine.pageOrder);
+    // Determine if page ordering was modified
+    const isSequential =
+      pdfEngine.pageOrder.length === srcDoc.getPageCount() &&
+      pdfEngine.pageOrder.every((val, idx) => val === idx);
 
-    for (let displayIdx = 0; displayIdx < copiedPages.length; displayIdx++) {
-      const page = copiedPages[displayIdx];
+    let doc;
+    let targetPages = [];
+
+    if (isSequential) {
+      doc = srcDoc;
+      targetPages = doc.getPages();
+    } else {
+      doc = await PDFDocument.create();
+      const copied = await doc.copyPages(srcDoc, pdfEngine.pageOrder);
+      for (const p of copied) {
+        doc.addPage(p);
+      }
+      targetPages = doc.getPages();
+    }
+
+    // Standard fonts for annotations
+    const fontRegular = await doc.embedFont(StandardFonts.Helvetica);
+    const fontBold = await doc.embedFont(StandardFonts.HelveticaBold);
+
+    // Process each page: apply rotations and render vector annotations
+    for (let displayIdx = 0; displayIdx < targetPages.length; displayIdx++) {
+      const page = targetPages[displayIdx];
       const origIdx = pdfEngine.pageOrder[displayIdx];
 
       // Apply rotation
       const customRot = pdfEngine.pageRotations.get(origIdx) || 0;
-      const currentRot = page.getRotation().angle;
-      page.setRotation(degrees((currentRot + customRot) % 360));
+      if (customRot !== 0) {
+        const currentRot = page.getRotation().angle;
+        page.setRotation(degrees((currentRot + customRot) % 360));
+      }
 
       const { width, height } = page.getSize();
-
-      // Retrieve annotations for this page
       const annotations = annotationsManager ? annotationsManager.getAnnotationsForPage(displayIdx) : [];
 
       for (const ann of annotations) {
@@ -188,7 +234,7 @@ export class PDFExporter {
           try {
             const base64Data = ann.dataUrl.split(',')[1];
             const imageBytes = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0));
-            const image = await outDoc.embedPng(imageBytes);
+            const image = await doc.embedPng(imageBytes);
             const pdfY = height - ann.y - ann.height;
             page.drawImage(image, {
               x: ann.x,
@@ -201,42 +247,13 @@ export class PDFExporter {
           }
         }
       }
-
-      outDoc.addPage(page);
-    }
-
-    // Form filling & flattening
-    if (formEngine && formEngine.fieldValues.size > 0) {
-      try {
-        const form = outDoc.getForm();
-        for (const [name, val] of formEngine.fieldValues.entries()) {
-          try {
-            const field = form.getFieldMaybe(name);
-            if (field) {
-              if (typeof val === 'boolean') {
-                if (val) field.check();
-                else field.uncheck();
-              } else if (typeof val === 'string') {
-                field.setText(val);
-              }
-            }
-          } catch (fErr) {
-            console.warn(`Could not set form field ${name}:`, fErr);
-          }
-        }
-        if (flattenForms) {
-          form.flatten();
-        }
-      } catch (formErr) {
-        console.warn('Form flattening error:', formErr);
-      }
     }
 
     // Set PDF metadata
-    outDoc.setTitle(pdfEngine.metadata?.title || 'FolioFlux Document');
-    outDoc.setProducer('FolioFlux PDF Engine');
-    outDoc.setCreator('FolioFlux — https://github.com/GreatOSS/pdf-gemini');
+    doc.setTitle(pdfEngine.metadata?.title || 'FolioFlux Document');
+    doc.setProducer('FolioFlux PDF Engine');
+    doc.setCreator('FolioFlux — https://github.com/GreatOSS/pdf-gemini');
 
-    return await outDoc.save();
+    return await doc.save();
   }
 }
