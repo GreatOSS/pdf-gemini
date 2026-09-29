@@ -1145,6 +1145,14 @@ export class CanvasView {
 
   setLayoutMode(mode) {
     this.layoutMode = mode;
+    if (mode === 'two-page') {
+      const containerWidth = this.scrollContainer.clientWidth - 80;
+      const fitTwo = Math.max(0.3, Math.min(1.5, containerWidth / (612 * 2 + 30)));
+      if (this.scale * (612 * 2 + 30) > containerWidth) {
+        this.scale = fitTwo;
+        if (this.onScaleChange) this.onScaleChange(this.scale);
+      }
+    }
     this.buildPages();
   }
 

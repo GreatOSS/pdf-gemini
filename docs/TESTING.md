@@ -138,6 +138,10 @@ During interactive testing via Playwright browser and desktop computer-use tools
    - *Fix*: Dynamically toggle pointer-events on `.annotation-overlay-layer` so that in `select` tool mode, AcroForm fields (text inputs, checkboxes, dropdowns) receive clicks directly while preserving drawing capture in markup modes.
    - *Fix*: Replaced synchronous `URL.revokeObjectURL(url)` with a delayed cleanup timer on file exports, ensuring Chromium and WebKit download managers can complete stream serialization before the blob object URL is revoked.
 
+26. **Two-Page Spread Layout Auto-Fit Scaling**:
+   - *Requirement*: When switching to two-page spread view, pages must render side-by-side without horizontal wrapping or clipping.
+   - *Implementation*: Added dynamic viewport calculation in `setLayoutMode('two-page')` that calculates dual-page fit scale based on active container width (`(containerWidth - 80) / (pageWidth * 2 + 30)`), automatically fitting spreads across laptop and desktop screens. Verified on DISPLAY=:101.
+
 ---
 
 ## 4. Automated Test Suite Status
