@@ -142,6 +142,10 @@ During interactive testing via Playwright browser and desktop computer-use tools
    - *Requirement*: When switching to two-page spread view, pages must render side-by-side without horizontal wrapping or clipping.
    - *Implementation*: Added dynamic viewport calculation in `setLayoutMode('two-page')` that calculates dual-page fit scale based on active container width (`(containerWidth - 80) / (pageWidth * 2 + 30)`), automatically fitting spreads across laptop and desktop screens. Verified on DISPLAY=:101.
 
+27. **CLI Flag Aliases & End-to-End Pipeline Verification**:
+   - *Requirement*: Support standard flag variants (`-o`, `--output`, `--outdir`, `--output-dir`) across CLI subcommands (`split`, `merge`, `rotate`, `extract-text`, `info`).
+   - *Implementation*: Expanded CLI flag parsing in `bin/folioflux.js` and added automated regression tests in `tests/cli.test.js` validating the full headless splitting, merging, rotating, and inspection pipeline.
+
 ---
 
 ## 4. Automated Test Suite Status
@@ -149,18 +153,19 @@ During interactive testing via Playwright browser and desktop computer-use tools
 ```
 ✔ AnnotationsManager add, undo, and redo (0.94ms)
 ✔ AnnotationsManager update and delete (0.26ms)
-✔ CLI --version and --help output (280.81ms)
-✔ CLI info on generated sample file (187.20ms)
-✔ CLI extract-text from document (299.50ms)
-✔ PDF metadata updating and retrieval (45.91ms)
-✔ PDF multi-page outline / bookmark generation compatibility (5.35ms)
-✔ Password-protected PDF detection interface (112.32ms)
-✔ PDF creation and page addition (28.61ms)
-✔ PDF page rotation (3.85ms)
-✔ PDF merge multiple documents (2.89ms)
-✔ PDF split document (2.09ms)
-✔ PDF watermark and page numbering export (13.06ms)
-✔ PDF measurement annotation export (6.31ms)
+✔ CLI --version and --help output (289.20ms)
+✔ CLI info on generated sample file (193.63ms)
+✔ CLI extract-text from document (303.81ms)
+✔ CLI split and merge subcommands with flag variants (379.18ms)
+✔ PDF metadata updating and retrieval (42.07ms)
+✔ PDF multi-page outline / bookmark generation compatibility (3.99ms)
+✔ Password-protected PDF detection interface (123.02ms)
+✔ PDF creation and page addition (25.89ms)
+✔ PDF page rotation (5.29ms)
+✔ PDF merge multiple documents (3.62ms)
+✔ PDF split document (2.00ms)
+✔ PDF watermark and page numbering export (11.86ms)
+✔ PDF measurement annotation export (4.11ms)
 
-Total: 14 tests passed, 0 failures, 0 skipped.
+Total: 15 tests passed, 0 failures, 0 skipped.
 ```

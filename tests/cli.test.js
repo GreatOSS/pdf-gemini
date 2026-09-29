@@ -65,3 +65,44 @@ test('CLI extract-text from document', async () => {
 
   fs.rmSync(tmpDir, { recursive: true, force: true });
 });
+
+test('CLI split and merge subcommands with flag variants', async () => {
+  const tmpDir = path.resolve('/tmp/opencode/cli-split-merge-test');
+  if (!fs.existsSync(tmpDir)) fs.mkdirSync(tmpDir, { recursive: true });
+
+  const { PDFDocument } = await import('pdf-lib');
+  const doc = await PDFDocument.create();
+  doc.addPage([400, 600]);
+  doc.addPage([400, 600]);
+
+  const testFile = path.join(tmpDir, 'multi.pdf');
+  const splitDir = path.join(tmpDir, 'split_out');
+  fs.writeFileSync(testFile, await doc.save());
+
+  // Test split with --outdir flag
+  const { stdout: splitOut } = await execFileAsync('node', [CLI_PATH, 'split', testFile, '--outdir', splitDir]);
+  assert.ok(splitOut.includes('Successfully wrote 2 pages'));
+  assert.ok(fs.existsSync(path.join(splitDir, 'multi-page-1.pdf')));
+  assert.ok(fs.existsSync(path.join(splitDir, 'multi-page-2.pdf')));
+
+  // Test merge
+  const mergedFile = path.join(tmpDir, 'merged.pdf');
+  const { stdout: mergeOut } = await execFileAsync('node', [
+    CLI_PATH, 'merge',
+    path.join(splitDir, 'multi-page-1.pdf'),
+    path.join(splitDir, 'multi-page-2.pdf'),
+    '-o', mergedFile
+  ]);
+  assert.ok(mergeOut.includes('Successfully merged 2 files'));
+  assert.ok(fs.existsSync(mergedFile));
+
+  // Test rotate CLI
+  const rotatedFile = path.join(tmpDir, 'rotated.pdf');
+  const { stdout: rotateOut } = await execFileAsync('node', [
+    CLI_PATH, 'rotate', mergedFile, '--degrees', '90', '-o', rotatedFile
+  ]);
+  assert.ok(rotateOut.includes('Successfully rotated all 2 pages by 90°'));
+  assert.ok(fs.existsSync(rotatedFile));
+
+  fs.rmSync(tmpDir, { recursive: true, force: true });
+});

@@ -142,6 +142,8 @@ async function handleSplit(args) {
   const filePath = args[0];
   let outIndex = args.indexOf('-o');
   if (outIndex === -1) outIndex = args.indexOf('--output');
+  if (outIndex === -1) outIndex = args.indexOf('--outdir');
+  if (outIndex === -1) outIndex = args.indexOf('--output-dir');
   const outDir = outIndex !== -1 ? args[outIndex + 1] : './split_pages';
 
   if (!filePath || !fs.existsSync(filePath)) {
