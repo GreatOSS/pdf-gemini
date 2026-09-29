@@ -134,6 +134,10 @@ During interactive testing via Playwright browser and desktop computer-use tools
    - *Requirement*: Users frequently open scanned documents where all pages were captured sideways or upside down.
    - *Implementation*: Added one-click Rotate All CW button to the thumbnail sidebar header and dedicated Rotate All CW (+90°) / CCW (-90°) buttons in the Page Organizer modal. Verified with live desktop interaction on DISPLAY=:101.
 
+25. **Form Layer Interaction Hierarchy & Blob Download Lifecycle**:
+   - *Fix*: Dynamically toggle pointer-events on `.annotation-overlay-layer` so that in `select` tool mode, AcroForm fields (text inputs, checkboxes, dropdowns) receive clicks directly while preserving drawing capture in markup modes.
+   - *Fix*: Replaced synchronous `URL.revokeObjectURL(url)` with a delayed cleanup timer on file exports, ensuring Chromium and WebKit download managers can complete stream serialization before the blob object URL is revoked.
+
 ---
 
 ## 4. Automated Test Suite Status

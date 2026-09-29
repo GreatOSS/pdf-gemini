@@ -253,8 +253,10 @@ export class CanvasView {
       const textLayer = document.createElement('div');
       textLayer.className = 'textLayer';
 
+      const isDrawingTool = !['select', 'hand'].includes(this.activeTool);
       const annotationOverlay = document.createElement('div');
-      annotationOverlay.className = 'annotation-overlay-layer interactive';
+      annotationOverlay.className = `annotation-overlay-layer ${isDrawingTool ? 'interactive' : ''}`;
+      annotationOverlay.style.pointerEvents = isDrawingTool ? 'auto' : 'none';
 
       const svgOverlay = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
       svgOverlay.setAttribute('class', 'annotation-svg-canvas');
@@ -1163,6 +1165,12 @@ export class CanvasView {
     this.wrapper.querySelectorAll('.textLayer').forEach(tl => {
       tl.style.pointerEvents = allowSelect ? 'auto' : 'none';
       tl.style.userSelect = allowSelect ? 'text' : 'none';
+    });
+
+    const isDrawingTool = !['select', 'hand'].includes(tool);
+    this.wrapper.querySelectorAll('.annotation-overlay-layer').forEach(ol => {
+      ol.classList.toggle('interactive', isDrawingTool);
+      ol.style.pointerEvents = isDrawingTool ? 'auto' : 'none';
     });
   }
 }

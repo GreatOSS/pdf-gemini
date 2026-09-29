@@ -398,7 +398,7 @@ export class FolioFluxApp {
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+      setTimeout(() => URL.revokeObjectURL(url), 5000);
       this.showToast('Document text exported as .txt!');
     } catch (err) {
       console.error('Export text error:', err);
@@ -419,7 +419,7 @@ export class FolioFluxApp {
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+      setTimeout(() => URL.revokeObjectURL(url), 5000);
       this.showToast('Form data exported as JSON!');
     } catch (err) {
       console.error('Export form data error:', err);
@@ -439,7 +439,7 @@ export class FolioFluxApp {
         pageNumbers: this.pageNumbers,
       });
 
-      const blob = new Blob([outputBytes], { type: 'application/pdf' });
+      const blob = new Blob([outputBytes], { type: 'application/octet-stream' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -448,7 +448,7 @@ export class FolioFluxApp {
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+      setTimeout(() => URL.revokeObjectURL(url), 5000);
 
       this.showToast('PDF successfully saved & downloaded!');
     } catch (err) {
