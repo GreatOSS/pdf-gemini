@@ -67,10 +67,16 @@ export class ShortcutsModal {
               <strong>M</strong>: Measure / Ruler Tool
             </div>
             <div style="background: var(--bg-surface-secondary); padding: 8px 12px; border-radius: 6px;">
+              <strong>[ / ]</strong>: Rotate Page (CCW / CW)
+            </div>
+            <div style="background: var(--bg-surface-secondary); padding: 8px 12px; border-radius: 6px;">
               <strong>D</strong>: Reading Mode (Light/Dark/Sepia)
             </div>
             <div style="background: var(--bg-surface-secondary); padding: 8px 12px; border-radius: 6px;">
               <strong>B</strong>: Toggle Sidebar
+            </div>
+            <div style="background: var(--bg-surface-secondary); padding: 8px 12px; border-radius: 6px;">
+              <strong>F</strong>: Toggle Fullscreen
             </div>
             <div style="background: var(--bg-surface-secondary); padding: 8px 12px; border-radius: 6px;">
               <strong>P</strong>: Presentation Mode

@@ -193,10 +193,11 @@ Click **Organize** in the header or use the **Pages** sidebar tab:
 | `Ctrl + Y` | Redo undone action |
 | `+` / `-` | Zoom In / Zoom Out |
 | `0` | Fit to width / Reset zoom |
-| `PageDown` / `]` | Next page |
-| `PageUp` / `[` | Previous page |
+| `PageDown` / `PageUp` | Next / Previous page |
+| `[` / `]` | Rotate current page (90° CCW / 90° CW) |
 | `H` | Hand (Pan) tool |
 | `V` | Selection cursor tool |
+| `F` | Toggle Fullscreen |
 | `P` | Toggle Presentation Mode |
 | `D` | Cycle Reading Mode (Light / Dark / Sepia) |
 | `B` | Toggle Sidebar |

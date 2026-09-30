@@ -686,6 +686,16 @@ export class FolioFluxApp {
           this.toolbar.setActiveTool('circle');
         } else if (e.key === 'm' || e.key === 'M') {
           this.toolbar.setActiveTool('measure');
+        } else if (e.key === '[') {
+          this.handleSidebarAction('rotate-page', { pageIndex: this.canvasView.currentPage - 1, degrees: -90 });
+        } else if (e.key === ']') {
+          this.handleSidebarAction('rotate-page', { pageIndex: this.canvasView.currentPage - 1, degrees: 90 });
+        } else if ((e.key === 'f' || e.key === 'F') && !e.ctrlKey && !e.metaKey) {
+          if (!document.fullscreenElement) {
+            document.documentElement.requestFullscreen().catch(() => {});
+          } else {
+            document.exitFullscreen().catch(() => {});
+          }
         } else if (e.key === 'p' || e.key === 'P') {
           this.togglePresentationMode();
         } else if (e.key === 'Escape') {

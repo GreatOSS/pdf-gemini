@@ -190,6 +190,14 @@ During interactive testing via Playwright browser and desktop computer-use tools
    - *Requirement*: Drawing and measurement interactions must accurately bind to the specific page receiving mouse events, preventing event leakage or coordinate distortion across multi-page views.
    - *Implementation*: Consolidated drawing `mousemove` and `mouseup` into single global listeners on `CanvasView` that track `activeDrawingPageIndex` and `activePageWrap`, eliminating per-page duplicate listener leaks and ensuring multi-page vector annotations attach to the exact targeted page. Verified on DISPLAY=:101.
 
+39. **Single-Key Page Rotation (`[` / `]`) & Fullscreen (`F`) Shortcuts**:
+   - *Requirement*: Provide rapid single-key shortcuts to rotate the active page 90° Clockwise or Counter-Clockwise and toggle full-screen immersion without reaching for the toolbar.
+   - *Implementation*: Bound `[` to CCW rotation (-90°) and `]` to CW rotation (+90°) on the current page; bound `F` to `document.documentElement.requestFullscreen()`. Verified live.
+
+40. **In-Place Note Popover Synchronization & Robust Page Detection**:
+   - *Requirement*: Saving or editing a sticky note's popover text must propagate immediately to the AnnotationsManager, undo stack, and sidebar notes list; page detection must use viewport center containment to prevent false page jumps.
+   - *Implementation*: Updated `.btn-save-note` to call `annotationsManager.updateAnnotation()`; refined `detectCurrentPage()` to evaluate viewport center relative to active page bounding rects without buggy threshold fallbacks. Verified on DISPLAY=:101.
+
 ---
 
 ## 4. Automated Test Suite Status

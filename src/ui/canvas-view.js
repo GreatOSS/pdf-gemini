@@ -1054,10 +1054,15 @@ export class CanvasView {
             ann.text = textarea.value;
             note.title = ann.text;
           });
+          textarea.addEventListener('keydown', (ev) => {
+            if (ev.key === 'Escape') {
+              this.annotationsManager.updateAnnotation(pageIndex, ann.id, { text: textarea.value });
+              popover.remove();
+            }
+          });
           popover.querySelector('.btn-save-note').addEventListener('click', (ev) => {
             ev.stopPropagation();
-            ann.text = textarea.value;
-            note.title = ann.text;
+            this.annotationsManager.updateAnnotation(pageIndex, ann.id, { text: textarea.value });
             popover.remove();
           });
           popover.querySelector('.btn-delete-note').addEventListener('click', (ev) => {
@@ -1155,7 +1160,7 @@ export class CanvasView {
     if (!this.pageWrappers || this.pageWrappers.length === 0) return;
 
     const containerTop = this.scrollContainer.scrollTop;
-    const viewCenter = containerTop + this.scrollContainer.clientHeight / 3;
+    const viewCenter = containerTop + this.scrollContainer.clientHeight / 2;
     let closestPage = 1;
 
     for (let i = 0; i < this.pageWrappers.length; i++) {
@@ -1166,9 +1171,6 @@ export class CanvasView {
       if (viewCenter >= top && viewCenter <= bottom) {
         closestPage = i + 1;
         break;
-      }
-      if (containerTop < top && closestPage === 1) {
-        closestPage = i + 1;
       }
     }
 
