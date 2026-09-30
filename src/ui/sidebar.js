@@ -233,7 +233,7 @@ export class Sidebar {
     try {
       const origIndex = this.pdfEngine.pageOrder[displayIndex];
       const page = await this.pdfEngine.getPage(origIndex + 1);
-      const rotation = (page.rotate + (this.pdfEngine.pageRotations.get(origIndex) || 0)) % 360;
+      const rotation = (page.rotate + this.pdfEngine.getPageRotation(displayIndex)) % 360;
 
       const viewport = page.getViewport({ scale: 0.25, rotation });
       canvas.width = viewport.width;

@@ -205,6 +205,7 @@ export class Toolbar {
             <option value="png">Images (.png)</option>
             <option value="txt">Text (.txt)</option>
             <option value="json">Form Data (.json)</option>
+            <option value="annotations">Annotations (.json)</option>
           </select>
 
           <!-- Print Document -->

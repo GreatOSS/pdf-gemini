@@ -4,8 +4,9 @@
  */
 
 export class PageOrganizerModal {
-  constructor({ pdfEngine, onApply }) {
+  constructor({ pdfEngine, annotationsManager, onApply }) {
     this.pdfEngine = pdfEngine;
+    this.annotationsManager = annotationsManager;
     this.onApply = onApply;
     this.isOpen = false;
 
@@ -110,7 +111,12 @@ export class PageOrganizerModal {
             <button class="btn-icon btn-move-right" title="Move Right" data-index="${i}" ${i === this.pdfEngine.numPages - 1 ? 'disabled style="opacity: 0.3;"' : ''}>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><polyline points="9 18 15 12 9 6"></polyline></svg>
             </button>
-            <button class="btn-icon btn-rotate-cw" title="Rotate CW" data-index="${i}">
+            <button class="btn-icon btn-rotate-ccw" title="Rotate CCW (-90°)" data-index="${i}">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12">
+                <path d="M2.5 2v6h6M2.66 15.57a10 10 0 1 0 .57-8.38l-5.67-5.67"></path>
+              </svg>
+            </button>
+            <button class="btn-icon btn-rotate-cw" title="Rotate CW (+90°)" data-index="${i}">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12">
                 <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path>
               </svg>
@@ -138,6 +144,7 @@ export class PageOrganizerModal {
       if (leftBtn && i > 0) {
         leftBtn.addEventListener('click', () => {
           this.pdfEngine.reorderPage(i, i - 1);
+          if (this.annotationsManager) this.annotationsManager.reorderPage(i, i - 1);
           this.refreshGrid();
         });
       }
@@ -146,6 +153,7 @@ export class PageOrganizerModal {
       if (rightBtn && i < this.pdfEngine.numPages - 1) {
         rightBtn.addEventListener('click', () => {
           this.pdfEngine.reorderPage(i, i + 1);
+          if (this.annotationsManager) this.annotationsManager.reorderPage(i, i + 1);
           this.refreshGrid();
         });
       }
@@ -171,8 +179,14 @@ export class PageOrganizerModal {
         const srcIndex = parseInt(e.dataTransfer.getData('text/plain'), 10);
         if (!isNaN(srcIndex) && srcIndex !== i) {
           this.pdfEngine.reorderPage(srcIndex, i);
+          if (this.annotationsManager) this.annotationsManager.reorderPage(srcIndex, i);
           this.refreshGrid();
         }
+      });
+
+      tile.querySelector('.btn-rotate-ccw').addEventListener('click', () => {
+        this.pdfEngine.rotatePage(i, -90);
+        this.refreshGrid();
       });
 
       tile.querySelector('.btn-rotate-cw').addEventListener('click', () => {
@@ -182,6 +196,7 @@ export class PageOrganizerModal {
 
       tile.querySelector('.btn-dup').addEventListener('click', () => {
         this.pdfEngine.duplicatePage(i);
+        if (this.annotationsManager) this.annotationsManager.duplicatePage(i);
         this.refreshGrid();
       });
 
@@ -193,6 +208,7 @@ export class PageOrganizerModal {
           return;
         }
         this.pdfEngine.deletePage(i);
+        if (this.annotationsManager) this.annotationsManager.deletePage(i);
         this.refreshGrid();
       });
 
@@ -204,7 +220,7 @@ export class PageOrganizerModal {
     try {
       const origIndex = this.pdfEngine.pageOrder[displayIndex];
       const page = await this.pdfEngine.getPage(origIndex + 1);
-      const rotation = (page.rotate + (this.pdfEngine.pageRotations.get(origIndex) || 0)) % 360;
+      const rotation = (page.rotate + this.pdfEngine.getPageRotation(displayIndex)) % 360;
 
       const viewport = page.getViewport({ scale: 0.3, rotation });
       canvas.width = viewport.width;

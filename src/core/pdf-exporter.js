@@ -90,7 +90,9 @@ export class PDFExporter {
       const origIdx = pdfEngine.pageOrder[displayIdx];
 
       // Apply rotation
-      const customRot = pdfEngine.pageRotations.get(origIdx) || 0;
+      const customRot = typeof pdfEngine.getPageRotation === 'function'
+        ? pdfEngine.getPageRotation(displayIdx)
+        : (pdfEngine.pageRotations?.get ? pdfEngine.pageRotations.get(origIdx) : pdfEngine.pageRotations?.[displayIdx]) || 0;
       if (customRot !== 0) {
         const currentRot = page.getRotation().angle;
         page.setRotation(degrees((currentRot + customRot) % 360));

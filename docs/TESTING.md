@@ -154,26 +154,42 @@ During interactive testing via Playwright browser and desktop computer-use tools
    - *Requirement*: Replace all remaining synchronous `alert(...)` dialogs across the application with non-blocking, accessible toast notifications.
    - *Implementation*: Replaced all alerts in `app.js`, `page-organizer.js`, `signature-modal.js`, and `tts-controller.js` with `showToast(msg, type)` supporting `info`, `warning`, `error`, and `success` styling (`toast-warning`, `toast-error`). Verified single-page deletion prevention and file export errors.
 
+30. **Annotations Synchronization on Page Reordering, Deletion, and Duplication**:
+   - *Requirement*: Ensure all annotations, sticky notes, highlights, and undo/redo stacks maintain strict synchrony when pages are reordered, deleted, or duplicated via the sidebar or fullscreen Page Organizer.
+   - *Implementation*: Added `reorderPage(fromIndex, toIndex)`, `deletePage(pageIndex)`, and `duplicatePage(pageIndex)` to `AnnotationsManager` with proper page index shifts for active annotations and historical undo/redo stacks. Connected both `Sidebar` and `PageOrganizerModal` to update `AnnotationsManager` in lockstep.
+
+31. **Per-Slot Independent Rotation for Duplicated Pages & CCW Rotation**:
+   - *Requirement*: Duplicated pages must be independently rotatable without altering original page orientations; users should have single-click Counter-Clockwise (-90°) rotation in the Page Organizer.
+   - *Implementation*: Upgraded `PDFEngine` to track rotations by slot index (`displayRotations`) rather than solely `origIndex`. Added `btn-rotate-ccw` to page cards in `PageOrganizerModal` and updated export rotation lookup. Verified on DISPLAY=:101.
+
+32. **Annotations Export as Structured JSON**:
+   - *Requirement*: Allow users to export all annotations, vector paths, comments, stamps, and measurements as structured JSON.
+   - *Implementation*: Added `Annotations (.json)` export format to toolbar dropdown with clean JSON serialization, document metadata, and delayed blob URL revocation. Verified download.
+
 ---
 
 ## 4. Automated Test Suite Status
 
 ```
-✔ AnnotationsManager add, undo, and redo (0.94ms)
-✔ AnnotationsManager update and delete (0.26ms)
-✔ CLI --version and --help output (289.20ms)
-✔ CLI info on generated sample file (193.63ms)
-✔ CLI extract-text from document (303.81ms)
-✔ CLI split and merge subcommands with flag variants (379.18ms)
-✔ PDF metadata updating and retrieval (42.07ms)
-✔ PDF multi-page outline / bookmark generation compatibility (3.99ms)
-✔ Password-protected PDF detection interface (123.02ms)
-✔ PDF creation and page addition (25.89ms)
-✔ PDF page rotation (5.29ms)
-✔ PDF merge multiple documents (3.62ms)
-✔ PDF split document (2.00ms)
-✔ PDF watermark and page numbering export (11.86ms)
-✔ PDF measurement annotation export (4.11ms)
+✔ AnnotationsManager add, undo, and redo (1.02ms)
+✔ AnnotationsManager update and delete (0.25ms)
+✔ AnnotationsManager reorderPage maintains annotation positioning and undo history (0.25ms)
+✔ AnnotationsManager deletePage cleans up target page and shifts subsequent annotations (0.84ms)
+✔ AnnotationsManager duplicatePage clones annotations and shifts subsequent annotations (0.39ms)
+✔ CLI --version and --help output (279.50ms)
+✔ CLI info on generated sample file (195.73ms)
+✔ CLI extract-text from document (304.13ms)
+✔ CLI split and merge subcommands with flag variants (404.81ms)
+✔ PDF metadata updating and retrieval (40.86ms)
+✔ PDF multi-page outline / bookmark generation compatibility (3.47ms)
+✔ Password-protected PDF detection interface (101.46ms)
+✔ PDF creation and page addition (24.84ms)
+✔ PDF page rotation (4.18ms)
+✔ PDF merge multiple documents (2.85ms)
+✔ PDF split document (3.68ms)
+✔ PDF watermark and page numbering export (17.59ms)
+✔ PDF measurement annotation export (4.08ms)
+✔ PDFEngine independent rotations for duplicated pages and export (9.44ms)
 
-Total: 15 tests passed, 0 failures, 0 skipped.
+Total: 19 tests passed, 0 failures, 0 skipped.
 ```

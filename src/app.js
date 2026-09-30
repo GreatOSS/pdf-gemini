@@ -137,6 +137,7 @@ export class FolioFluxApp {
 
     this.organizerModal = new PageOrganizerModal({
       pdfEngine: this.pdfEngine,
+      annotationsManager: this.annotationsManager,
       onApply: async () => {
         await this.canvasView.buildPages();
         await this.sidebar.updateContent();
@@ -247,6 +248,7 @@ export class FolioFluxApp {
       else if (data === 'png') this.exportImages();
       else if (data === 'txt') this.exportText();
       else if (data === 'json') this.exportFormData();
+      else if (data === 'annotations') this.exportAnnotations();
     } else if (action === 'open-file') {
       this.loadFile(data);
     } else if (action === 'save-pdf') {
@@ -277,6 +279,7 @@ export class FolioFluxApp {
         return;
       }
       this.pdfEngine.deletePage(data);
+      this.annotationsManager.deletePage(data);
       await this.canvasView.buildPages();
       this.sidebar.updateContent();
       this.toolbar.setDocumentInfo({
@@ -285,6 +288,7 @@ export class FolioFluxApp {
       });
     } else if (action === 'reorder-page') {
       this.pdfEngine.reorderPage(data.sourceIndex, data.targetIndex);
+      this.annotationsManager.reorderPage(data.sourceIndex, data.targetIndex);
       await this.canvasView.buildPages();
       this.sidebar.updateContent();
     }
@@ -437,6 +441,33 @@ export class FolioFluxApp {
     } catch (err) {
       console.error('Export form data error:', err);
       this.showToast('Failed to export form data: ' + err.message, 'error');
+    }
+  }
+
+  exportAnnotations() {
+    try {
+      const allAnnotations = this.annotationsManager.getAllAnnotations();
+      const payload = {
+        document: this.pdfEngine.metadata?.title || 'document',
+        exportedAt: new Date().toISOString(),
+        totalAnnotations: allAnnotations.length,
+        annotations: allAnnotations,
+      };
+      const jsonStr = JSON.stringify(payload, null, 2);
+      const blob = new Blob([jsonStr], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      const title = (this.pdfEngine.metadata?.title || 'document').replace(/[^a-zA-Z0-9_-]/g, '_');
+      a.download = `${title}-annotations.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 5000);
+      this.showToast('Annotations exported as JSON!');
+    } catch (err) {
+      console.error('Export annotations error:', err);
+      this.showToast('Failed to export annotations: ' + err.message, 'error');
     }
   }
 

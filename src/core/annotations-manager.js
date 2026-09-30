@@ -162,4 +162,96 @@ export class AnnotationsManager {
     this.redoStack = [];
     this.notify('clear', null);
   }
+
+  /**
+   * Reorders annotations when pages are moved from fromIndex to toIndex.
+   */
+  reorderPage(fromIndex, toIndex) {
+    if (fromIndex === toIndex) return;
+
+    const getNewIndex = (idx) => {
+      if (idx === fromIndex) return toIndex;
+      if (fromIndex < toIndex) {
+        if (idx > fromIndex && idx <= toIndex) return idx - 1;
+      } else {
+        if (idx >= toIndex && idx < fromIndex) return idx + 1;
+      }
+      return idx;
+    };
+
+    const newMap = new Map();
+    for (const [idx, list] of this.annotations.entries()) {
+      const newIdx = getNewIndex(idx);
+      newMap.set(newIdx, list);
+    }
+    this.annotations = newMap;
+
+    // Shift page indices in undo/redo history stacks
+    for (const item of [...this.undoStack, ...this.redoStack]) {
+      if (typeof item.pageIndex === 'number') {
+        item.pageIndex = getNewIndex(item.pageIndex);
+      }
+    }
+
+    this.notify('reorder', { fromIndex, toIndex });
+  }
+
+  /**
+   * Cleans up annotations on a deleted page and shifts subsequent page indices.
+   */
+  deletePage(pageIndex) {
+    const newMap = new Map();
+    for (const [idx, list] of this.annotations.entries()) {
+      if (idx === pageIndex) continue;
+      const newIdx = idx > pageIndex ? idx - 1 : idx;
+      newMap.set(newIdx, list);
+    }
+    this.annotations = newMap;
+
+    const filterAndShift = (stack) => {
+      const result = [];
+      for (const item of stack) {
+        if (item.pageIndex === pageIndex) continue;
+        if (item.pageIndex > pageIndex) item.pageIndex--;
+        result.push(item);
+      }
+      return result;
+    };
+    this.undoStack = filterAndShift(this.undoStack);
+    this.redoStack = filterAndShift(this.redoStack);
+
+    this.notify('change', { action: 'deletePage', pageIndex });
+  }
+
+  /**
+   * Duplicates annotations for a duplicated page and shifts subsequent page indices.
+   */
+  duplicatePage(pageIndex) {
+    const newMap = new Map();
+    for (const [idx, list] of this.annotations.entries()) {
+      if (idx <= pageIndex) {
+        newMap.set(idx, list);
+      } else {
+        newMap.set(idx + 1, list);
+      }
+    }
+
+    if (this.annotations.has(pageIndex)) {
+      const cloned = this.annotations.get(pageIndex).map(ann => ({
+        ...JSON.parse(JSON.stringify(ann)),
+        id: 'ann_' + Math.random().toString(36).substr(2, 9),
+        createdAt: Date.now(),
+      }));
+      newMap.set(pageIndex + 1, cloned);
+    }
+    this.annotations = newMap;
+
+    for (const item of [...this.undoStack, ...this.redoStack]) {
+      if (typeof item.pageIndex === 'number' && item.pageIndex > pageIndex) {
+        item.pageIndex++;
+      }
+    }
+
+    this.notify('change', { action: 'duplicatePage', pageIndex });
+  }
 }

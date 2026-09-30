@@ -14,6 +14,7 @@ export class PDFEngine {
     this.rawData = null;
     this.numPages = 0;
     this.pageRotations = new Map(); // pageIndex -> rotation degrees (0, 90, 180, 270)
+    this.displayRotations = []; // slot-based rotation degrees matching pageOrder
     this.pageOrder = []; // array of original page indices
     this.metadata = {};
     this.outline = [];
@@ -58,6 +59,7 @@ export class PDFEngine {
 
     // Initialize page ordering and default rotations
     this.pageOrder = Array.from({ length: this.numPages }, (_, i) => i);
+    this.displayRotations = Array.from({ length: this.numPages }, () => 0);
     this.pageRotations.clear();
 
     // Fetch metadata
@@ -99,6 +101,9 @@ export class PDFEngine {
    * Gets effective rotation for a displayed page index.
    */
   getPageRotation(displayIndex) {
+    if (this.displayRotations && typeof this.displayRotations[displayIndex] === 'number') {
+      return (this.displayRotations[displayIndex] || 0) % 360;
+    }
     const origIndex = this.pageOrder[displayIndex];
     return (this.pageRotations.get(origIndex) || 0) % 360;
   }
@@ -107,9 +112,17 @@ export class PDFEngine {
    * Rotates a page by deltaDegrees (typically 90 or -90).
    */
   rotatePage(displayIndex, deltaDegrees = 90) {
-    const origIndex = this.pageOrder[displayIndex];
-    const current = this.pageRotations.get(origIndex) || 0;
+    if (!this.displayRotations || this.displayRotations.length !== this.pageOrder.length) {
+      this.displayRotations = Array.from({ length: this.pageOrder.length }, (_, i) => {
+        const orig = this.pageOrder[i];
+        return this.pageRotations.get(orig) || 0;
+      });
+    }
+    const current = this.displayRotations[displayIndex] || 0;
     const next = (current + deltaDegrees + 360) % 360;
+    this.displayRotations[displayIndex] = next;
+
+    const origIndex = this.pageOrder[displayIndex];
     this.pageRotations.set(origIndex, next);
     return next;
   }
@@ -130,6 +143,10 @@ export class PDFEngine {
     if (sourceIndex === targetIndex) return;
     const [moved] = this.pageOrder.splice(sourceIndex, 1);
     this.pageOrder.splice(targetIndex, 0, moved);
+    if (this.displayRotations) {
+      const [rot] = this.displayRotations.splice(sourceIndex, 1);
+      this.displayRotations.splice(targetIndex, 0, rot);
+    }
   }
 
   /**
@@ -140,6 +157,9 @@ export class PDFEngine {
       throw new Error('Cannot delete the only page in the document.');
     }
     this.pageOrder.splice(displayIndex, 1);
+    if (this.displayRotations) {
+      this.displayRotations.splice(displayIndex, 1);
+    }
     this.numPages = this.pageOrder.length;
   }
 
@@ -149,6 +169,10 @@ export class PDFEngine {
   duplicatePage(displayIndex) {
     const origIndex = this.pageOrder[displayIndex];
     this.pageOrder.splice(displayIndex + 1, 0, origIndex);
+    if (this.displayRotations) {
+      const curRot = this.displayRotations[displayIndex] || 0;
+      this.displayRotations.splice(displayIndex + 1, 0, curRot);
+    }
     this.numPages = this.pageOrder.length;
   }
 
@@ -174,7 +198,7 @@ export class PDFEngine {
 
     const origIndex = this.pageOrder[displayIndex];
     const page = await this.getPage(origIndex + 1);
-    const rotation = (page.rotate + (this.pageRotations.get(origIndex) || 0)) % 360;
+    const rotation = (page.rotate + this.getPageRotation(displayIndex)) % 360;
 
     const viewport = page.getViewport({ scale, rotation });
     const pixelRatio = window.devicePixelRatio || 1;
@@ -235,6 +259,7 @@ export class PDFEngine {
     }
     this.rawData = null;
     this.pageRotations.clear();
+    this.displayRotations = [];
     this.pageOrder = [];
   }
 }

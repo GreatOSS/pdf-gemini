@@ -165,6 +165,7 @@ Click **Organize** in the header or use the **Pages** sidebar tab:
   - **Images (.png)**: Export high-resolution PNG renders of pages for presentations or image editors.
   - **Text (.txt)**: Extract and download all textual content across the entire document into a formatted text file.
   - **Form Data (.json)**: Export filled AcroForm field values as structured JSON data for programmatic workflows.
+  - **Annotations (.json)**: Export all vector annotations, notes, stamps, measurements, and signatures as structured JSON for backup, audit, or integration.
 - **Print (`Ctrl + P`)**: Sends high-resolution rendered pages directly to your system print dialog.
 - **CLI Commands**:
   - `folioflux info doc.pdf`

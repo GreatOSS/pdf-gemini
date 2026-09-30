@@ -135,3 +135,33 @@ test('PDF measurement annotation export', async () => {
   const verifyDoc = await PDFDocument.load(exportedBytes);
   assert.strictEqual(verifyDoc.getPageCount(), 1);
 });
+
+test('PDFEngine independent rotations for duplicated pages and export', async () => {
+  const { PDFExporter } = await import('../src/core/pdf-exporter.js');
+  const doc = await PDFDocument.create();
+  doc.addPage([600, 800]); // Page 0
+  const rawBytes = await doc.save();
+
+  // Mock engine with duplicate page (page 0 duplicated to slot 1)
+  const mockPdfEngine = {
+    rawData: rawBytes,
+    pageOrder: [0, 0],
+    displayRotations: [0, 90], // slot 0 has 0°, slot 1 has 90°
+    getPageRotation(displayIdx) {
+      return this.displayRotations[displayIdx] || 0;
+    },
+    metadata: { title: 'Duplicated Rotations' },
+  };
+
+  const exportedBytes = await PDFExporter.exportDocument({
+    pdfEngine: mockPdfEngine,
+    annotationsManager: null,
+    formEngine: null,
+  });
+
+  const verifyDoc = await PDFDocument.load(exportedBytes);
+  assert.strictEqual(verifyDoc.getPageCount(), 2, 'Exported doc should have 2 pages');
+  const pages = verifyDoc.getPages();
+  assert.strictEqual(pages[0].getRotation().angle, 0, 'First page should have 0 degree rotation');
+  assert.strictEqual(pages[1].getRotation().angle, 90, 'Second duplicated page should have 90 degree rotation');
+});
