@@ -89,6 +89,14 @@ export class CanvasView {
         this.scrollContainer.scrollTop = this.panStart.scrollTop - dy;
       }
 
+      if (this.isDrawing && this.activeTool === 'eraser' && this.activeDrawingPageIndex !== null) {
+        const el = document.elementFromPoint(e.clientX, e.clientY)?.closest('[data-ann-id]');
+        if (el && el.dataset.annId) {
+          this.annotationsManager.deleteAnnotation(this.activeDrawingPageIndex, el.dataset.annId);
+        }
+        return;
+      }
+
       if (this.isDrawing && this.startCoord && this.activeDrawingPageIndex !== null && this.activePageWrap) {
         const rect = this.activePageWrap.getBoundingClientRect();
         const pt = {
@@ -141,6 +149,13 @@ export class CanvasView {
       if (this.isPanning) {
         this.isPanning = false;
         this.scrollContainer.classList.remove('panning');
+      }
+
+      if (this.isDrawing && this.activeTool === 'eraser') {
+        this.isDrawing = false;
+        this.activeDrawingPageIndex = null;
+        this.activePageWrap = null;
+        return;
       }
 
       if (this.isDrawing && this.activeDrawingPageIndex !== null && this.activePageWrap) {
@@ -490,6 +505,20 @@ export class CanvasView {
     pageWrap.addEventListener('mousedown', (e) => {
       if (e.button !== 0) return;
       if (this.activeTool === 'select' || this.activeTool === 'hand') return;
+
+      if (this.activeTool === 'eraser') {
+        const target = e.target.closest('[data-ann-id]');
+        if (target && target.dataset.annId) {
+          this.annotationsManager.deleteAnnotation(pageIndex, target.dataset.annId);
+          if (typeof window.showToast === 'function') {
+            window.showToast('Annotation erased', 'info');
+          }
+        }
+        this.isDrawing = true;
+        this.activeDrawingPageIndex = pageIndex;
+        this.activePageWrap = pageWrap;
+        return;
+      }
 
       const pt = getPagePoint(e);
       this.isDrawing = true;
@@ -906,6 +935,7 @@ export class CanvasView {
         path.setAttribute('stroke-linecap', 'round');
         path.setAttribute('stroke-linejoin', 'round');
         path.setAttribute('fill', 'none');
+        path.dataset.annId = ann.id;
         svgOverlay.appendChild(path);
       } else if (ann.type === 'rect') {
         const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
@@ -916,6 +946,7 @@ export class CanvasView {
         rect.setAttribute('stroke', ann.strokeColor || '#ef4444');
         rect.setAttribute('stroke-width', (ann.strokeWidth || 2) * this.scale);
         rect.setAttribute('fill', ann.fillColor || 'transparent');
+        rect.dataset.annId = ann.id;
         svgOverlay.appendChild(rect);
       } else if (ann.type === 'highlight') {
         const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
@@ -926,6 +957,7 @@ export class CanvasView {
         rect.setAttribute('fill', ann.color || '#facc15');
         rect.setAttribute('fill-opacity', String(ann.opacity || 0.4));
         rect.style.mixBlendMode = 'multiply';
+        rect.dataset.annId = ann.id;
         svgOverlay.appendChild(rect);
       } else if (ann.type === 'circle') {
         const ellipse = document.createElementNS('http://www.w3.org/2000/svg', 'ellipse');
@@ -936,6 +968,7 @@ export class CanvasView {
         ellipse.setAttribute('stroke', ann.strokeColor || '#ef4444');
         ellipse.setAttribute('stroke-width', (ann.strokeWidth || 2) * this.scale);
         ellipse.setAttribute('fill', 'transparent');
+        ellipse.dataset.annId = ann.id;
         svgOverlay.appendChild(ellipse);
       } else if (ann.type === 'line') {
         const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
@@ -945,6 +978,7 @@ export class CanvasView {
         line.setAttribute('y2', ann.endY * this.scale);
         line.setAttribute('stroke', ann.strokeColor || '#ef4444');
         line.setAttribute('stroke-width', (ann.strokeWidth || 2) * this.scale);
+        line.dataset.annId = ann.id;
         svgOverlay.appendChild(line);
       } else if (ann.type === 'measure') {
         const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
@@ -954,6 +988,7 @@ export class CanvasView {
         line.setAttribute('y2', ann.endY * this.scale);
         line.setAttribute('stroke', ann.color || '#4f46e5');
         line.setAttribute('stroke-width', 2 * this.scale);
+        line.dataset.annId = ann.id;
         svgOverlay.appendChild(line);
 
         const dx = (ann.endX - ann.startX) * this.scale;
@@ -969,6 +1004,7 @@ export class CanvasView {
         cap1.setAttribute('y2', ann.startY * this.scale + ny);
         cap1.setAttribute('stroke', ann.color || '#4f46e5');
         cap1.setAttribute('stroke-width', 2 * this.scale);
+        cap1.dataset.annId = ann.id;
         svgOverlay.appendChild(cap1);
 
         const cap2 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
@@ -978,10 +1014,12 @@ export class CanvasView {
         cap2.setAttribute('y2', ann.endY * this.scale + ny);
         cap2.setAttribute('stroke', ann.color || '#4f46e5');
         cap2.setAttribute('stroke-width', 2 * this.scale);
+        cap2.dataset.annId = ann.id;
         svgOverlay.appendChild(cap2);
 
         const badge = document.createElement('div');
         badge.className = 'canvas-measure-badge';
+        badge.dataset.annId = ann.id;
         const midX = ((ann.startX + ann.endX) / 2) * this.scale;
         const midY = ((ann.startY + ann.endY) / 2) * this.scale;
         badge.style.position = 'absolute';
@@ -1007,6 +1045,7 @@ export class CanvasView {
       } else if (ann.type === 'text') {
         const box = document.createElement('div');
         box.className = 'canvas-textbox';
+        box.dataset.annId = ann.id;
         box.style.left = `${ann.x * this.scale}px`;
         box.style.top = `${ann.y * this.scale}px`;
         box.style.fontSize = `${(ann.fontSize || 14) * this.scale}px`;
@@ -1026,6 +1065,7 @@ export class CanvasView {
       } else if (ann.type === 'note') {
         const note = document.createElement('div');
         note.className = 'canvas-sticky-note';
+        note.dataset.annId = ann.id;
         note.style.left = `${ann.x * this.scale}px`;
         note.style.top = `${ann.y * this.scale}px`;
         note.title = ann.text;
@@ -1076,6 +1116,7 @@ export class CanvasView {
         const stamp = document.createElement('div');
         const stType = (ann.stampType || 'APPROVED').toLowerCase();
         stamp.className = `canvas-stamp ${stType}`;
+        stamp.dataset.annId = ann.id;
         stamp.style.left = `${ann.x * this.scale}px`;
         stamp.style.top = `${ann.y * this.scale}px`;
         stamp.style.fontSize = `${16 * this.scale}px`;
@@ -1085,6 +1126,7 @@ export class CanvasView {
       } else if (ann.type === 'signature' && ann.dataUrl) {
         const sig = document.createElement('div');
         sig.className = 'canvas-signature';
+        sig.dataset.annId = ann.id;
         sig.style.left = `${ann.x * this.scale}px`;
         sig.style.top = `${ann.y * this.scale}px`;
         sig.style.width = `${(ann.width || 160) * this.scale}px`;
@@ -1094,6 +1136,7 @@ export class CanvasView {
       } else if (ann.type === 'redaction') {
         const red = document.createElement('div');
         red.className = 'canvas-redaction';
+        red.dataset.annId = ann.id;
         red.style.left = `${ann.x * this.scale}px`;
         red.style.top = `${ann.y * this.scale}px`;
         red.style.width = `${ann.width * this.scale}px`;
@@ -1261,6 +1304,7 @@ export class CanvasView {
     this.toolOptions = { ...this.toolOptions, ...options };
 
     this.scrollContainer.classList.toggle('hand-tool', tool === 'hand');
+    this.scrollContainer.classList.toggle('eraser-tool', tool === 'eraser');
 
     // Deselect any native text selection when switching away from select tool
     if (tool !== 'select') {
@@ -1279,6 +1323,10 @@ export class CanvasView {
     this.wrapper.querySelectorAll('.annotation-overlay-layer').forEach(ol => {
       ol.classList.toggle('interactive', isDrawingTool);
       ol.style.pointerEvents = isDrawingTool ? 'auto' : 'none';
+    });
+
+    this.wrapper.querySelectorAll('.annotation-svg-canvas').forEach(sc => {
+      sc.style.pointerEvents = tool === 'eraser' ? 'auto' : (isDrawingTool ? 'auto' : 'none');
     });
   }
 }

@@ -55,6 +55,12 @@ export class ShortcutsModal {
               <strong>V / H</strong>: Select / Hand Tool
             </div>
             <div style="background: var(--bg-surface-secondary); padding: 8px 12px; border-radius: 6px;">
+              <strong>W / I</strong>: Freehand Pen / Inking
+            </div>
+            <div style="background: var(--bg-surface-secondary); padding: 8px 12px; border-radius: 6px;">
+              <strong>X</strong>: Eraser Tool
+            </div>
+            <div style="background: var(--bg-surface-secondary); padding: 8px 12px; border-radius: 6px;">
               <strong>E</strong>: Highlighter Tool
             </div>
             <div style="background: var(--bg-surface-secondary); padding: 8px 12px; border-radius: 6px;">

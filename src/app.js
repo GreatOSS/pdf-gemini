@@ -674,6 +674,10 @@ export class FolioFluxApp {
           this.toolbar.setActiveTool('hand');
         } else if (e.key === 'v' || e.key === 'V') {
           this.toolbar.setActiveTool('select');
+        } else if (e.key === 'w' || e.key === 'W' || e.key === 'i' || e.key === 'I') {
+          this.toolbar.setActiveTool('pen');
+        } else if (e.key === 'x' || e.key === 'X') {
+          this.toolbar.setActiveTool('eraser');
         } else if (e.key === 'e' || e.key === 'E') {
           this.toolbar.setActiveTool('highlight');
         } else if (e.key === 't' || e.key === 'T') {

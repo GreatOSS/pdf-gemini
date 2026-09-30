@@ -197,6 +197,8 @@ Click **Organize** in the header or use the **Pages** sidebar tab:
 | `[` / `]` | Rotate current page (90° CCW / 90° CW) |
 | `H` | Hand (Pan) tool |
 | `V` | Selection cursor tool |
+| `W` / `I` | Freehand Pen / Inking tool |
+| `X` | Eraser tool |
 | `F` | Toggle Fullscreen |
 | `P` | Toggle Presentation Mode |
 | `D` | Cycle Reading Mode (Light / Dark / Sepia) |

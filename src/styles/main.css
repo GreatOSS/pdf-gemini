@@ -824,6 +824,18 @@ button, input, select, textarea {
   z-index: 12;
 }
 
+.canvas-container.eraser-tool,
+.canvas-container.eraser-tool * {
+  cursor: crosshair !important;
+}
+
+.annotation-svg-canvas path,
+.annotation-svg-canvas rect,
+.annotation-svg-canvas ellipse,
+.annotation-svg-canvas line {
+  pointer-events: auto;
+}
+
 .canvas-signature img {
   display: block;
   max-width: 100%;

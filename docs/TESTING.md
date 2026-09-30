@@ -198,6 +198,14 @@ During interactive testing via Playwright browser and desktop computer-use tools
    - *Requirement*: Saving or editing a sticky note's popover text must propagate immediately to the AnnotationsManager, undo stack, and sidebar notes list; page detection must use viewport center containment to prevent false page jumps.
    - *Implementation*: Updated `.btn-save-note` to call `annotationsManager.updateAnnotation()`; refined `detectCurrentPage()` to evaluate viewport center relative to active page bounding rects without buggy threshold fallbacks. Verified on DISPLAY=:101.
 
+41. **Interactive Eraser Tool with Hit-Testing & Sweep Erase**:
+   - *Requirement*: Clicking or brushing the Eraser tool across any annotation (freehand inking, highlights, shapes, stamps, measurements, sticky notes) should remove that annotation cleanly with undo support.
+   - *Implementation*: Tagged all rendered vector and DOM annotations with `data-ann-id`; wired the Eraser tool to hit-test targeted elements via `closest('[data-ann-id]')` and `document.elementFromPoint`, removing matches via `annotationsManager.deleteAnnotation()`. Verified on DISPLAY=:101.
+
+42. **Single-Key Shortcuts for Pen (`W` / `I`) and Eraser (`X`)**:
+   - *Requirement*: Enable rapid tool selection for inking and erasing without navigating toolbar menus.
+   - *Implementation*: Mapped `W` and `I` to freehand inking (`pen`) and `X` to the `eraser` tool. Added entries to Help & Shortcuts modal.
+
 ---
 
 ## 4. Automated Test Suite Status
