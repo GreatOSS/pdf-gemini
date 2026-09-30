@@ -174,6 +174,14 @@ During interactive testing via Playwright browser and desktop computer-use tools
    - *Requirement*: Selecting text in the document should summon an interactive floating menu with Highlight and Copy that remains clickable without the browser prematurely collapsing the selection.
    - *Implementation*: Prevented default event propagation on `selectionPopup` mousedown/pointerdown to preserve DOM selection ranges across clicks; bound discrete click handlers for Highlight and Copy with toast confirmations. Verified on DISPLAY=:101.
 
+35. **Dynamic Page Aspect Ratio Scaling (Fit-Width & Fit-Page for Landscape/Portrait)**:
+   - *Requirement*: Zoom presets ("fit-width", "fit-page") must adapt dynamically to actual page dimensions instead of assuming fixed US Letter portrait sizes.
+   - *Implementation*: Sourced `origWidth` and `origHeight` directly from the rendered viewport on each page wrapper; updated `setScale` and `setLayoutMode` to calculate scales using the active page's aspect ratio, supporting landscape presentations, blueprints, and letter formats seamlessly.
+
+36. **Scroll Position Reset & Single-Page Scroll Invariance**:
+   - *Requirement*: Opening a new document must always initialize viewport scroll to the top of page 1; single-page and presentation modes must avoid miscalculating page indices from hidden elements having `offsetTop = 0`.
+   - *Implementation*: Explicitly reset `canvasView.currentPage = 1`, `scrollTop = 0`, and `scrollLeft = 0` in `loadDocumentBytes()`; guarded `detectCurrentPage()` to bypass single-page mode and ignore hidden page wrappers (`display === 'none'`). Verified slide stepping on DISPLAY=:101.
+
 ---
 
 ## 4. Automated Test Suite Status

@@ -644,6 +644,8 @@ export class CanvasView {
 
       pageWrap.style.width = `${Math.floor(viewport.width)}px`;
       pageWrap.style.height = `${Math.floor(viewport.height)}px`;
+      pageWrap.dataset.origWidth = String(viewport.width / this.scale);
+      pageWrap.dataset.origHeight = String(viewport.height / this.scale);
 
       // Render Text Layer
       textLayer.innerHTML = '';
@@ -1129,15 +1131,23 @@ export class CanvasView {
   }
 
   detectCurrentPage() {
+    if (this.layoutMode === 'single') return;
+    if (!this.pageWrappers || this.pageWrappers.length === 0) return;
+
     const containerTop = this.scrollContainer.scrollTop;
+    const viewCenter = containerTop + this.scrollContainer.clientHeight / 3;
     let closestPage = 1;
-    let minDiff = Infinity;
 
     for (let i = 0; i < this.pageWrappers.length; i++) {
-      const top = this.pageWrappers[i].offsetTop;
-      const diff = Math.abs(top - containerTop);
-      if (diff < minDiff) {
-        minDiff = diff;
+      const pw = this.pageWrappers[i];
+      if (pw.style.display === 'none' || pw.offsetParent === null) continue;
+      const top = pw.offsetTop;
+      const bottom = top + pw.offsetHeight;
+      if (viewCenter >= top && viewCenter <= bottom) {
+        closestPage = i + 1;
+        break;
+      }
+      if (containerTop < top && closestPage === 1) {
         closestPage = i + 1;
       }
     }
@@ -1146,6 +1156,25 @@ export class CanvasView {
       this.currentPage = closestPage;
       this.onPageChange(this.currentPage);
     }
+  }
+
+  getPageDimensions(displayIndex = 0) {
+    const pw = this.pageWrappers[displayIndex] || this.pageWrappers[0];
+    if (pw && pw.dataset.origWidth && pw.dataset.origHeight) {
+      return {
+        width: parseFloat(pw.dataset.origWidth) || 612,
+        height: parseFloat(pw.dataset.origHeight) || 792,
+      };
+    }
+    for (const wrap of this.pageWrappers) {
+      if (wrap.dataset.origWidth && wrap.dataset.origHeight) {
+        return {
+          width: parseFloat(wrap.dataset.origWidth) || 612,
+          height: parseFloat(wrap.dataset.origHeight) || 792,
+        };
+      }
+    }
+    return { width: 612, height: 792 };
   }
 
   scrollToPage(pageNumber) {
@@ -1174,10 +1203,15 @@ export class CanvasView {
   setScale(newScale) {
     if (newScale === 'fit-width') {
       const containerWidth = this.scrollContainer.clientWidth - 80;
-      this.scale = Math.max(0.2, Math.min(3.0, containerWidth / 612));
+      const { width } = this.getPageDimensions(this.currentPage - 1);
+      this.scale = Math.max(0.2, Math.min(3.0, containerWidth / width));
     } else if (newScale === 'fit-page') {
+      const containerWidth = this.scrollContainer.clientWidth - 80;
       const containerHeight = this.scrollContainer.clientHeight - 80;
-      this.scale = Math.max(0.2, Math.min(3.0, containerHeight / 792));
+      const { width, height } = this.getPageDimensions(this.currentPage - 1);
+      const scaleW = containerWidth / width;
+      const scaleH = containerHeight / height;
+      this.scale = Math.max(0.2, Math.min(3.0, Math.min(scaleW, scaleH)));
     } else {
       this.scale = parseFloat(newScale);
     }
@@ -1190,8 +1224,9 @@ export class CanvasView {
     this.layoutMode = mode;
     if (mode === 'two-page') {
       const containerWidth = this.scrollContainer.clientWidth - 80;
-      const fitTwo = Math.max(0.3, Math.min(1.5, containerWidth / (612 * 2 + 30)));
-      if (this.scale * (612 * 2 + 30) > containerWidth) {
+      const { width } = this.getPageDimensions(this.currentPage - 1);
+      const fitTwo = Math.max(0.3, Math.min(1.5, containerWidth / (width * 2 + 30)));
+      if (this.scale * (width * 2 + 30) > containerWidth) {
         this.scale = fitTwo;
         if (this.onScaleChange) this.onScaleChange(this.scale);
       }

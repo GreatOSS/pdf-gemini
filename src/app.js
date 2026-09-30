@@ -321,7 +321,10 @@ export class FolioFluxApp {
       currentPage: 1,
     });
 
+    this.canvasView.currentPage = 1;
     await this.canvasView.buildPages();
+    this.canvasView.scrollContainer.scrollTop = 0;
+    this.canvasView.scrollContainer.scrollLeft = 0;
     await this.sidebar.updateContent();
 
     this.showToast(`Loaded ${fileName} (${this.pdfEngine.numPages} pages)`);
@@ -564,6 +567,7 @@ export class FolioFluxApp {
     if (this.isPresentationMode) {
       this.canvasView.setLayoutMode('single');
       this.canvasView.setScale('fit-page');
+      this.canvasView.scrollToPage(this.canvasView.currentPage || 1);
       this.renderPresentationHud();
       this.showToast('Presentation Mode (Press Esc or P to exit)');
     } else {
@@ -695,7 +699,7 @@ export class FolioFluxApp {
           this.searchBar?.close();
         } else if (e.key === 'ArrowRight' || (e.key === ' ' && this.isPresentationMode)) {
           this.handleToolbarAction('next-page');
-        } else if (e.key === 'ArrowLeft') {
+        } else if (e.key === 'ArrowLeft' || (e.key === 'Backspace' && this.isPresentationMode)) {
           this.handleToolbarAction('prev-page');
         } else if (e.key === 'Home') {
           this.canvasView.scrollToPage(1);
