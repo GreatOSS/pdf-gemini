@@ -166,30 +166,39 @@ During interactive testing via Playwright browser and desktop computer-use tools
    - *Requirement*: Allow users to export all annotations, vector paths, comments, stamps, and measurements as structured JSON.
    - *Implementation*: Added `Annotations (.json)` export format to toolbar dropdown with clean JSON serialization, document metadata, and delayed blob URL revocation. Verified download.
 
+33. **Interactive Form Management (Import JSON, Export JSON, Clear Fields)**:
+   - *Requirement*: Enable complete round-trip AcroForm data handling including loading external JSON files to populate forms, exporting filled data, and clearing all form inputs in one click.
+   - *Implementation*: Added `Forms ▾` dropdown menu in the header toolbar. Tagged all rendered form field elements with `data-field-name` and hooked `FormEngine.subscribe` into `CanvasView.updateFormFieldsFromEngine()` for live instant DOM synchronization without full page teardown. Verified on DISPLAY=:101.
+
+34. **Floating Text Selection Highlight & Copy Event Synchronization**:
+   - *Requirement*: Selecting text in the document should summon an interactive floating menu with Highlight and Copy that remains clickable without the browser prematurely collapsing the selection.
+   - *Implementation*: Prevented default event propagation on `selectionPopup` mousedown/pointerdown to preserve DOM selection ranges across clicks; bound discrete click handlers for Highlight and Copy with toast confirmations. Verified on DISPLAY=:101.
+
 ---
 
 ## 4. Automated Test Suite Status
 
 ```
-✔ AnnotationsManager add, undo, and redo (1.02ms)
+✔ AnnotationsManager add, undo, and redo (1.14ms)
 ✔ AnnotationsManager update and delete (0.25ms)
-✔ AnnotationsManager reorderPage maintains annotation positioning and undo history (0.25ms)
-✔ AnnotationsManager deletePage cleans up target page and shifts subsequent annotations (0.84ms)
-✔ AnnotationsManager duplicatePage clones annotations and shifts subsequent annotations (0.39ms)
-✔ CLI --version and --help output (279.50ms)
-✔ CLI info on generated sample file (195.73ms)
-✔ CLI extract-text from document (304.13ms)
-✔ CLI split and merge subcommands with flag variants (404.81ms)
-✔ PDF metadata updating and retrieval (40.86ms)
-✔ PDF multi-page outline / bookmark generation compatibility (3.47ms)
-✔ Password-protected PDF detection interface (101.46ms)
-✔ PDF creation and page addition (24.84ms)
-✔ PDF page rotation (4.18ms)
-✔ PDF merge multiple documents (2.85ms)
-✔ PDF split document (3.68ms)
-✔ PDF watermark and page numbering export (17.59ms)
-✔ PDF measurement annotation export (4.08ms)
-✔ PDFEngine independent rotations for duplicated pages and export (9.44ms)
+✔ AnnotationsManager reorderPage maintains annotation positioning and undo history (0.29ms)
+✔ AnnotationsManager deletePage cleans up target page and shifts subsequent annotations (0.83ms)
+✔ AnnotationsManager duplicatePage clones annotations and shifts subsequent annotations (0.40ms)
+✔ CLI --version and --help output (288.44ms)
+✔ CLI info on generated sample file (191.28ms)
+✔ CLI extract-text from document (299.90ms)
+✔ CLI split and merge subcommands with flag variants (405.57ms)
+✔ PDF metadata updating and retrieval (38.95ms)
+✔ PDF multi-page outline / bookmark generation compatibility (8.94ms)
+✔ Password-protected PDF detection interface (122.86ms)
+✔ FormEngine value tracking, export, import, and reset lifecycle (1.24ms)
+✔ PDF creation and page addition (29.14ms)
+✔ PDF page rotation (4.47ms)
+✔ PDF merge multiple documents (4.73ms)
+✔ PDF split document (1.97ms)
+✔ PDF watermark and page numbering export (18.36ms)
+✔ PDF measurement annotation export (8.54ms)
+✔ PDFEngine independent rotations for duplicated pages and export (10.08ms)
 
-Total: 19 tests passed, 0 failures, 0 skipped.
+Total: 20 tests passed, 0 failures, 0 skipped.
 ```

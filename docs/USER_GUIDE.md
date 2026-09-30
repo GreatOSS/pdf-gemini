@@ -123,7 +123,11 @@ Click the **Watermark** icon in the toolstrip to open the customization dialog:
 
 - Fill in standard PDF form fields: text inputs, checkboxes, radio buttons, and dropdown options.
 - Visual highlighting ensures you never miss a required field.
-- **Flatten Forms on Save**: Converts active form inputs into permanent text so they cannot be tampered with after signing.
+- **Forms ▾ Dropdown Menu**:
+  - **Import Data (.json)...**: Load a structured JSON file to auto-populate all form fields instantaneously.
+  - **Export Data (.json)**: Download currently filled form values as structured JSON data for programmatic workflows.
+  - **Clear All Fields**: One-click action to reset all form inputs and checkboxes back to empty state.
+- **Flatten Forms on Save**: Automatically converts active form inputs into permanent text upon export so they cannot be tampered with after signing.
 
 ---
 

@@ -58,3 +58,39 @@ test('Password-protected PDF detection interface', async () => {
   assert.strictEqual(pdfjs.PasswordResponses.NEED_PASSWORD, 1);
   assert.strictEqual(pdfjs.PasswordResponses.INCORRECT_PASSWORD, 2);
 });
+
+test('FormEngine value tracking, export, import, and reset lifecycle', async () => {
+  const { FormEngine } = await import('../src/core/form-engine.js');
+  const engine = new FormEngine(null);
+
+  engine.setValue('companyName', 'Acme Corp');
+  engine.setValue('agreed', true);
+  engine.setValue('term', '3 Years');
+
+  assert.strictEqual(engine.getValue('companyName'), 'Acme Corp');
+  assert.strictEqual(engine.getValue('agreed'), true);
+  assert.strictEqual(engine.getValue('term'), '3 Years');
+
+  const exported = engine.exportData();
+  assert.deepStrictEqual(exported, {
+    companyName: 'Acme Corp',
+    agreed: true,
+    term: '3 Years',
+  });
+
+  // Import new data
+  engine.importData({
+    companyName: 'Globex Ltd',
+    agreed: false,
+    term: '5 Years',
+  });
+
+  assert.strictEqual(engine.getValue('companyName'), 'Globex Ltd');
+  assert.strictEqual(engine.getValue('agreed'), false);
+  assert.strictEqual(engine.getValue('term'), '5 Years');
+
+  // Reset
+  engine.reset();
+  assert.strictEqual(engine.getValue('companyName'), undefined);
+  assert.strictEqual(Object.keys(engine.exportData()).length, 0);
+});

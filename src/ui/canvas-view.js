@@ -105,6 +105,15 @@ export class CanvasView {
       });
     }
 
+    // Listen to form engine changes (import, reset)
+    if (this.formEngine) {
+      this.formEngine.subscribe((event) => {
+        if (event === 'imported' || event === 'reset') {
+          this.updateFormFieldsFromEngine();
+        }
+      });
+    }
+
     this.initSelectionPopup();
   }
 
@@ -126,6 +135,16 @@ export class CanvasView {
       </button>
     `;
     document.body.appendChild(this.selectionPopup);
+
+    // Prevent mousedown on the popup from collapsing the document selection
+    this.selectionPopup.addEventListener('mousedown', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+    });
+    this.selectionPopup.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+    });
 
     const updatePopup = () => {
       const sel = window.getSelection();
@@ -181,7 +200,11 @@ export class CanvasView {
       const text = this.currentSelectionText || window.getSelection()?.toString();
       if (text) {
         navigator.clipboard.writeText(text);
+        if (typeof window.showToast === 'function') {
+          window.showToast('Copied selected text to clipboard!', 'success');
+        }
       }
+      if (window.getSelection) window.getSelection().removeAllRanges();
       this.selectionPopup.style.display = 'none';
       this.currentSelectionRects = null;
       this.currentSelectionPageWrap = null;
@@ -211,6 +234,9 @@ export class CanvasView {
           });
         }
       }
+      if (typeof window.showToast === 'function') {
+        window.showToast('Selection highlighted!', 'success');
+      }
       if (window.getSelection) window.getSelection().removeAllRanges();
       this.selectionPopup.style.display = 'none';
       this.currentSelectionRects = null;
@@ -219,9 +245,7 @@ export class CanvasView {
 
     const btnCopy = this.selectionPopup.querySelector('#btn-popup-copy');
     const btnHighlight = this.selectionPopup.querySelector('#btn-popup-highlight');
-    btnCopy.addEventListener('pointerdown', handleCopy);
     btnCopy.addEventListener('click', handleCopy);
-    btnHighlight.addEventListener('pointerdown', handleHighlight);
     btnHighlight.addEventListener('click', handleHighlight);
   }
 
@@ -761,6 +785,7 @@ export class CanvasView {
       if (field.checkBox) {
         const checkbox = document.createElement('input');
         checkbox.type = 'checkbox';
+        checkbox.dataset.fieldName = field.fieldName;
         checkbox.checked = currentVal === true || currentVal === 'Yes' || currentVal === 'On' || currentVal === 'true';
         checkbox.style.cursor = 'pointer';
         checkbox.addEventListener('change', () => {
@@ -769,6 +794,7 @@ export class CanvasView {
         wrapper.appendChild(checkbox);
       } else if (field.fieldType === 'Ch' && field.options) {
         const select = document.createElement('select');
+        select.dataset.fieldName = field.fieldName;
         select.style.fontSize = `${Math.max(10, Math.floor(height * 0.6))}px`;
         for (const opt of field.options) {
           const option = document.createElement('option');
@@ -786,6 +812,7 @@ export class CanvasView {
       } else {
         const input = document.createElement('input');
         input.type = 'text';
+        input.dataset.fieldName = field.fieldName;
         input.value = Array.isArray(currentVal) ? currentVal.join('') : currentVal;
         input.style.fontSize = `${Math.max(10, Math.floor(height * 0.62))}px`;
         input.addEventListener('input', () => {
@@ -796,6 +823,21 @@ export class CanvasView {
 
       formLayer.appendChild(wrapper);
     }
+  }
+
+  updateFormFieldsFromEngine() {
+    if (!this.formEngine) return;
+    this.container.querySelectorAll('.formLayer [data-field-name]').forEach(el => {
+      const name = el.dataset.fieldName;
+      const val = this.formEngine.getValue(name);
+      if (el.type === 'checkbox') {
+        el.checked = val === true || val === 'Yes' || val === 'On' || val === 'true';
+      } else if (el.tagName === 'SELECT') {
+        el.value = val || '';
+      } else {
+        el.value = val !== undefined && val !== null ? (Array.isArray(val) ? val.join('') : String(val)) : '';
+      }
+    });
   }
 
   renderTextItems(container, textContent, viewport) {

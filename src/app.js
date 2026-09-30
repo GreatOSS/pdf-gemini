@@ -253,6 +253,11 @@ export class FolioFluxApp {
       this.loadFile(data);
     } else if (action === 'save-pdf') {
       this.savePDF();
+    } else if (action === 'reset-form') {
+      this.formEngine.reset();
+      this.showToast('All form fields cleared.', 'info');
+    } else if (action === 'import-form') {
+      this.importFormData(data);
     } else if (action === 'show-options-menu') {
       this.shortcutsModal.open();
     } else if (action === 'rename-doc') {
@@ -442,6 +447,29 @@ export class FolioFluxApp {
       console.error('Export form data error:', err);
       this.showToast('Failed to export form data: ' + err.message, 'error');
     }
+  }
+
+  importFormData(file) {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const parsed = JSON.parse(e.target.result);
+        if (typeof parsed !== 'object' || parsed === null) {
+          throw new Error('Invalid JSON format');
+        }
+        this.formEngine.importData(parsed);
+        const count = Object.keys(parsed).length;
+        this.showToast(`Imported ${count} form field${count === 1 ? '' : 's'}!`, 'success');
+      } catch (err) {
+        console.error('Import form data error:', err);
+        this.showToast('Failed to import form data: ' + err.message, 'error');
+      }
+    };
+    reader.onerror = () => {
+      this.showToast('Failed to read form data file', 'error');
+    };
+    reader.readAsText(file);
   }
 
   exportAnnotations() {

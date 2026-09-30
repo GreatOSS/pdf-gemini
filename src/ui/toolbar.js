@@ -208,6 +208,15 @@ export class Toolbar {
             <option value="annotations">Annotations (.json)</option>
           </select>
 
+          <!-- Interactive Form Controls -->
+          <input type="file" id="form-file-input" accept=".json,application/json" style="display: none;" />
+          <select id="select-forms" class="zoom-select" style="border: 1px solid var(--border); padding: 3px 6px; border-radius: 6px; font-weight: 500;" title="Form Tools">
+            <option value="" disabled selected>Forms ▾</option>
+            <option value="import-json">Import Data (.json)...</option>
+            <option value="export-json">Export Data (.json)</option>
+            <option value="reset-fields">Clear All Fields</option>
+          </select>
+
           <!-- Print Document -->
           <button id="btn-print-doc" class="btn-icon" data-tooltip="Print Document (Ctrl+P)" title="Print Document">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -451,6 +460,32 @@ export class Toolbar {
       exportSelect.addEventListener('change', (e) => {
         this.onAction('export-format', e.target.value);
         exportSelect.selectedIndex = 0;
+      });
+    }
+
+    // Forms Dropdown
+    const formsSelect = this.container.querySelector('#select-forms');
+    const formFileInput = this.container.querySelector('#form-file-input');
+    if (formsSelect) {
+      formsSelect.addEventListener('change', (e) => {
+        const val = e.target.value;
+        if (val === 'import-json') {
+          if (formFileInput) formFileInput.click();
+        } else if (val === 'export-json') {
+          this.onAction('export-format', 'json');
+        } else if (val === 'reset-fields') {
+          this.onAction('reset-form');
+        }
+        formsSelect.selectedIndex = 0;
+      });
+    }
+
+    if (formFileInput) {
+      formFileInput.addEventListener('change', (e) => {
+        if (e.target.files?.[0]) {
+          this.onAction('import-form', e.target.files[0]);
+          formFileInput.value = '';
+        }
       });
     }
 
