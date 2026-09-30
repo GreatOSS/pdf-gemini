@@ -214,6 +214,10 @@ During interactive testing via Playwright browser and desktop computer-use tools
    - *Requirement*: Dragging a PDF anywhere into the application window should highlight the viewport with a clear visual drop target; dropping unsupported files must display an informative toast instead of failing silently.
    - *Implementation*: Added window dragenter/dragleave counter tracking applying `body.file-dragover` with dashed primary outlines; guarded file drop with format inspection displaying warnings for non-PDF files and added error handling in `loadFile()`. Verified on DISPLAY=:101.
 
+45. **High-Fidelity Document Printing & Page-Break Architecture**:
+   - *Requirement*: Standard browser printing (`Ctrl + P`) must cleanly hide all UI chrome, toolbars, sidebars, floating search, toasts, and selection popups while printing multi-page documents with exact CSS page breaks and overlay alignment.
+   - *Implementation*: Sourced `#header-mount`, `#sidebar-mount`, `#toast-container`, and `.textLayer` in `@media print` rules; aligned `.annotation-overlay-layer`, `.annotation-svg-canvas`, and `.formLayer` at full width/height over the canvas with `break-after: page`. Verified via Chromium headless PDF generation.
+
 ---
 
 ## 4. Automated Test Suite Status

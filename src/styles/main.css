@@ -1339,6 +1339,9 @@ body.presentation-mode:hover .presentation-hud,
     overflow: visible !important;
   }
 
+  #header-mount,
+  #sidebar-mount,
+  #toast-container,
   .app-header,
   .toolstrip,
   .app-sidebar,
@@ -1350,13 +1353,16 @@ body.presentation-mode:hover .presentation-hud,
   .page-selection-box,
   .page-num-badge,
   .ruler-guide,
+  .selection-popup,
+  .textLayer,
   #welcome-overlay {
     display: none !important;
   }
 
-  #app,
-  .app-body,
-  .canvas-view {
+  .app-workspace,
+  #canvas-mount,
+  .canvas-container,
+  .pages-view-wrapper {
     display: block !important;
     position: static !important;
     overflow: visible !important;
@@ -1377,6 +1383,7 @@ body.presentation-mode:hover .presentation-hud,
     max-width: 100% !important;
     height: auto !important;
     display: block !important;
+    position: relative !important;
   }
 
   canvas.page-pdf-canvas {
@@ -1387,10 +1394,13 @@ body.presentation-mode:hover .presentation-hud,
     margin: 0 auto !important;
   }
 
-  .annotation-layer-svg,
-  .form-layer {
+  .annotation-overlay-layer,
+  .annotation-svg-canvas,
+  .formLayer {
     position: absolute !important;
     top: 0 !important;
     left: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
   }
 }
