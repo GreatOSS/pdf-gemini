@@ -995,6 +995,11 @@ button, input, select, textarea {
   border-color: var(--primary-hover);
 }
 
+body.file-dragover {
+  outline: 3px dashed var(--primary) !important;
+  outline-offset: -3px !important;
+}
+
 .dropzone-text {
   font-size: 14px;
   font-weight: 600;

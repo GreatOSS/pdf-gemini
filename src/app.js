@@ -332,8 +332,13 @@ export class FolioFluxApp {
 
   async loadFile(file) {
     if (!file) return;
-    const buffer = await file.arrayBuffer();
-    await this.loadDocumentBytes(new Uint8Array(buffer), file.name);
+    try {
+      const buffer = await file.arrayBuffer();
+      await this.loadDocumentBytes(new Uint8Array(buffer), file.name);
+    } catch (err) {
+      console.error('File load failed:', err);
+      this.showToast(`Failed to load "${file.name}": ${err.message}`, 'error');
+    }
   }
 
   async loadSampleTour() {
@@ -731,6 +736,23 @@ export class FolioFluxApp {
   }
 
   bindDropZone() {
+    let dragCounter = 0;
+
+    window.addEventListener('dragenter', (e) => {
+      if (e.dataTransfer?.types?.includes('Files')) {
+        dragCounter++;
+        document.body.classList.add('file-dragover');
+      }
+    });
+
+    window.addEventListener('dragleave', () => {
+      dragCounter--;
+      if (dragCounter <= 0) {
+        dragCounter = 0;
+        document.body.classList.remove('file-dragover');
+      }
+    });
+
     window.addEventListener('dragover', (e) => {
       e.preventDefault();
       e.dataTransfer.dropEffect = 'copy';
@@ -738,14 +760,20 @@ export class FolioFluxApp {
 
     window.addEventListener('drop', (e) => {
       e.preventDefault();
+      dragCounter = 0;
+      document.body.classList.remove('file-dragover');
       const file = e.dataTransfer.files?.[0];
-      if (file && (file.type === 'application/pdf' || file.name.endsWith('.pdf'))) {
-        this.loadFile(file);
+      if (file) {
+        if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
+          this.loadFile(file);
+        } else {
+          this.showToast(`Cannot open "${file.name}": Only PDF documents are supported.`, 'warning');
+        }
       }
     });
   }
 
-  showToast(message, type = 'info') {
+  showToast(message, type = 'info', duration = 4000) {
     let container = document.getElementById('toast-container');
     if (!container) {
       container = document.createElement('div');
@@ -763,7 +791,7 @@ export class FolioFluxApp {
       toast.style.opacity = '0';
       toast.style.transition = 'opacity 0.3s ease';
       setTimeout(() => toast.remove(), 300);
-    }, 3000);
+    }, duration);
   }
 
   hideWelcome() {

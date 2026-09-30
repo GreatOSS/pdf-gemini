@@ -210,6 +210,10 @@ During interactive testing via Playwright browser and desktop computer-use tools
    - *Requirement*: Switching between Single Page, Two-Page Spread, and Continuous Vertical Scroll must maintain reading position and keep the active page indicator synchronized without losing viewport context.
    - *Implementation*: Preserved active page state in `setLayoutMode()`; hooked `scrollToPage()` and `detectCurrentPage()` after asynchronous DOM page rebuilding. Verified on DISPLAY=:101.
 
+44. **Global Drag-and-Drop File Loading with Visual Feedback & Validation**:
+   - *Requirement*: Dragging a PDF anywhere into the application window should highlight the viewport with a clear visual drop target; dropping unsupported files must display an informative toast instead of failing silently.
+   - *Implementation*: Added window dragenter/dragleave counter tracking applying `body.file-dragover` with dashed primary outlines; guarded file drop with format inspection displaying warnings for non-PDF files and added error handling in `loadFile()`. Verified on DISPLAY=:101.
+
 ---
 
 ## 4. Automated Test Suite Status
