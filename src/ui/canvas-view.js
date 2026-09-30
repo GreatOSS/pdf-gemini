@@ -23,6 +23,9 @@ export class CanvasView {
 
     // Interaction state for active drawing
     this.isDrawing = false;
+    this.activeDrawingPageIndex = null;
+    this.activePageWrap = null;
+    this.activeSvgOverlay = null;
     this.drawingPoints = [];
     this.startCoord = null;
     this.activeSvgTemp = null;
@@ -85,12 +88,184 @@ export class CanvasView {
         this.scrollContainer.scrollLeft = this.panStart.scrollLeft - dx;
         this.scrollContainer.scrollTop = this.panStart.scrollTop - dy;
       }
+
+      if (this.isDrawing && this.startCoord && this.activeDrawingPageIndex !== null && this.activePageWrap) {
+        const rect = this.activePageWrap.getBoundingClientRect();
+        const pt = {
+          x: Math.max(0, (e.clientX - rect.left) / this.scale),
+          y: Math.max(0, (e.clientY - rect.top) / this.scale),
+        };
+
+        if (this.activeTool === 'pen' && this.activeSvgTemp) {
+          this.drawingPoints.push(pt);
+          let d = `M ${this.drawingPoints[0].x * this.scale} ${this.drawingPoints[0].y * this.scale}`;
+          for (let i = 1; i < this.drawingPoints.length; i++) {
+            d += ` L ${this.drawingPoints[i].x * this.scale} ${this.drawingPoints[i].y * this.scale}`;
+          }
+          this.activeSvgTemp.setAttribute('d', d);
+        } else if (this.activeTool === 'rect' || this.activeTool === 'redact' || this.activeTool === 'highlight') {
+          if (this.activeSvgTemp) {
+            const x = Math.min(this.startCoord.x, pt.x) * this.scale;
+            const y = Math.min(this.startCoord.y, pt.y) * this.scale;
+            const w = Math.abs(pt.x - this.startCoord.x) * this.scale;
+            const h = Math.abs(pt.y - this.startCoord.y) * this.scale;
+            this.activeSvgTemp.setAttribute('x', x);
+            this.activeSvgTemp.setAttribute('y', y);
+            this.activeSvgTemp.setAttribute('width', w);
+            this.activeSvgTemp.setAttribute('height', h);
+          }
+        } else if (this.activeTool === 'circle' && this.activeSvgTemp) {
+          const cx = ((this.startCoord.x + pt.x) / 2) * this.scale;
+          const cy = ((this.startCoord.y + pt.y) / 2) * this.scale;
+          const rx = (Math.abs(pt.x - this.startCoord.x) / 2) * this.scale;
+          const ry = (Math.abs(pt.y - this.startCoord.y) / 2) * this.scale;
+          this.activeSvgTemp.setAttribute('cx', cx);
+          this.activeSvgTemp.setAttribute('cy', cy);
+          this.activeSvgTemp.setAttribute('rx', rx);
+          this.activeSvgTemp.setAttribute('ry', ry);
+        } else if (this.activeTool === 'arrow' && this.activeSvgTemp) {
+          this.activeSvgTemp.setAttribute('x1', this.startCoord.x * this.scale);
+          this.activeSvgTemp.setAttribute('y1', this.startCoord.y * this.scale);
+          this.activeSvgTemp.setAttribute('x2', pt.x * this.scale);
+          this.activeSvgTemp.setAttribute('y2', pt.y * this.scale);
+        } else if (this.activeTool === 'measure' && this.activeSvgTemp) {
+          this.activeSvgTemp.setAttribute('x1', this.startCoord.x * this.scale);
+          this.activeSvgTemp.setAttribute('y1', this.startCoord.y * this.scale);
+          this.activeSvgTemp.setAttribute('x2', pt.x * this.scale);
+          this.activeSvgTemp.setAttribute('y2', pt.y * this.scale);
+        }
+      }
     });
 
-    window.addEventListener('mouseup', () => {
+    window.addEventListener('mouseup', (e) => {
       if (this.isPanning) {
         this.isPanning = false;
         this.scrollContainer.classList.remove('panning');
+      }
+
+      if (this.isDrawing && this.activeDrawingPageIndex !== null && this.activePageWrap) {
+        const pageIndex = this.activeDrawingPageIndex;
+        const rect = this.activePageWrap.getBoundingClientRect();
+        const pt = {
+          x: Math.max(0, (e.clientX - rect.left) / this.scale),
+          y: Math.max(0, (e.clientY - rect.top) / this.scale),
+        };
+
+        this.isDrawing = false;
+        this.activeDrawingPageIndex = null;
+
+        if (this.activeTool === 'pen' && this.drawingPoints.length > 1) {
+          this.annotationsManager.addAnnotation(pageIndex, {
+            type: 'ink',
+            color: this.toolOptions.color || '#4f46e5',
+            width: this.toolOptions.strokeWidth || 3,
+            points: this.drawingPoints,
+          });
+        } else if (this.activeTool === 'rect') {
+          const x = Math.min(this.startCoord.x, pt.x);
+          const y = Math.min(this.startCoord.y, pt.y);
+          const width = Math.abs(pt.x - this.startCoord.x);
+          const height = Math.abs(pt.y - this.startCoord.y);
+          if (width > 5 && height > 5) {
+            this.annotationsManager.addAnnotation(pageIndex, {
+              type: 'rect',
+              x, y, width, height,
+              strokeColor: this.toolOptions.color || '#ef4444',
+              strokeWidth: this.toolOptions.strokeWidth || 2,
+              fillColor: 'transparent',
+            });
+          }
+        } else if (this.activeTool === 'redact') {
+          const x = Math.min(this.startCoord.x, pt.x);
+          const y = Math.min(this.startCoord.y, pt.y);
+          const width = Math.abs(pt.x - this.startCoord.x);
+          const height = Math.abs(pt.y - this.startCoord.y);
+          if (width > 5 && height > 5) {
+            this.annotationsManager.addAnnotation(pageIndex, {
+              type: 'redaction',
+              x, y, width, height,
+              applied: true,
+              textOverlay: 'REDACTED',
+            });
+          }
+        } else if (this.activeTool === 'highlight') {
+          const x = Math.min(this.startCoord.x, pt.x);
+          const y = Math.min(this.startCoord.y, pt.y);
+          const width = Math.abs(pt.x - this.startCoord.x);
+          const height = Math.abs(pt.y - this.startCoord.y);
+          if (width > 4 && height > 4) {
+            this.annotationsManager.addAnnotation(pageIndex, {
+              type: 'highlight',
+              x, y, width, height,
+              color: this.toolOptions.highlighterColor || '#facc15',
+              opacity: 0.4,
+            });
+          }
+        } else if (this.activeTool === 'circle') {
+          const x = Math.min(this.startCoord.x, pt.x);
+          const y = Math.min(this.startCoord.y, pt.y);
+          const width = Math.abs(pt.x - this.startCoord.x);
+          const height = Math.abs(pt.y - this.startCoord.y);
+          if (width > 5 && height > 5) {
+            this.annotationsManager.addAnnotation(pageIndex, {
+              type: 'circle',
+              x: (this.startCoord.x + pt.x) / 2,
+              y: (this.startCoord.y + pt.y) / 2,
+              radiusX: width / 2,
+              radiusY: height / 2,
+              strokeColor: this.toolOptions.color || '#ef4444',
+              strokeWidth: this.toolOptions.strokeWidth || 2,
+            });
+          }
+        } else if (this.activeTool === 'arrow') {
+          this.annotationsManager.addAnnotation(pageIndex, {
+            type: 'line',
+            startX: this.startCoord.x,
+            startY: this.startCoord.y,
+            endX: pt.x,
+            endY: pt.y,
+            strokeColor: this.toolOptions.color || '#ef4444',
+            strokeWidth: this.toolOptions.strokeWidth || 2,
+          });
+        } else if (this.activeTool === 'measure') {
+          const dx = pt.x - this.startCoord.x;
+          const dy = pt.y - this.startCoord.y;
+          const distPts = Math.sqrt(dx * dx + dy * dy);
+          if (distPts > 5) {
+            const unit = this.toolOptions.measureUnit || 'in';
+            let label = '';
+            if (unit === 'in') {
+              label = `${(distPts / 72).toFixed(2)} in`;
+            } else if (unit === 'mm') {
+              label = `${((distPts / 72) * 25.4).toFixed(1)} mm`;
+            } else if (unit === 'ft') {
+              label = `${(distPts / 18).toFixed(1)} ft`;
+            } else if (unit === 'm') {
+              label = `${(distPts / 28.346).toFixed(2)} m`;
+            } else {
+              label = `${Math.round(distPts)} pt`;
+            }
+            this.annotationsManager.addAnnotation(pageIndex, {
+              type: 'measure',
+              startX: this.startCoord.x,
+              startY: this.startCoord.y,
+              endX: pt.x,
+              endY: pt.y,
+              distPts,
+              label,
+              unit,
+              color: this.toolOptions.color || '#4f46e5',
+            });
+          }
+        }
+
+        if (this.activeSvgTemp && this.activeSvgTemp.parentNode) {
+          this.activeSvgTemp.parentNode.removeChild(this.activeSvgTemp);
+        }
+        this.activeSvgTemp = null;
+        this.activePageWrap = null;
+        this.drawingPoints = [];
+        this.startCoord = null;
       }
     });
 
@@ -318,6 +493,9 @@ export class CanvasView {
 
       const pt = getPagePoint(e);
       this.isDrawing = true;
+      this.activeDrawingPageIndex = pageIndex;
+      this.activePageWrap = pageWrap;
+      this.activeSvgOverlay = svgOverlay;
       this.startCoord = pt;
 
       if (this.activeTool === 'pen') {
@@ -354,15 +532,19 @@ export class CanvasView {
       } else if (this.activeTool === 'text') {
         this.createTextAnnotation(pageIndex, pt);
         this.isDrawing = false;
+        this.activeDrawingPageIndex = null;
       } else if (this.activeTool === 'note') {
         this.createNoteAnnotation(pageIndex, pt);
         this.isDrawing = false;
+        this.activeDrawingPageIndex = null;
       } else if (this.activeTool === 'stamp') {
         this.createStampAnnotation(pageIndex, pt);
         this.isDrawing = false;
+        this.activeDrawingPageIndex = null;
       } else if (this.activeTool === 'signature') {
         this.createSignatureAnnotation(pageIndex, pt);
         this.isDrawing = false;
+        this.activeDrawingPageIndex = null;
       } else if (this.activeTool === 'redact') {
         const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
         rect.setAttribute('stroke', '#000000');
@@ -384,168 +566,6 @@ export class CanvasView {
         svgOverlay.appendChild(line);
         this.activeSvgTemp = line;
       }
-    });
-
-    window.addEventListener('mousemove', (e) => {
-      if (!this.isDrawing || !this.startCoord) return;
-      const pt = getPagePoint(e);
-
-      if (this.activeTool === 'pen' && this.activeSvgTemp) {
-        this.drawingPoints.push(pt);
-        let d = `M ${this.drawingPoints[0].x * this.scale} ${this.drawingPoints[0].y * this.scale}`;
-        for (let i = 1; i < this.drawingPoints.length; i++) {
-          d += ` L ${this.drawingPoints[i].x * this.scale} ${this.drawingPoints[i].y * this.scale}`;
-        }
-        this.activeSvgTemp.setAttribute('d', d);
-      } else if (this.activeTool === 'rect' || this.activeTool === 'redact' || this.activeTool === 'highlight') {
-        if (this.activeSvgTemp) {
-          const x = Math.min(this.startCoord.x, pt.x) * this.scale;
-          const y = Math.min(this.startCoord.y, pt.y) * this.scale;
-          const w = Math.abs(pt.x - this.startCoord.x) * this.scale;
-          const h = Math.abs(pt.y - this.startCoord.y) * this.scale;
-          this.activeSvgTemp.setAttribute('x', x);
-          this.activeSvgTemp.setAttribute('y', y);
-          this.activeSvgTemp.setAttribute('width', w);
-          this.activeSvgTemp.setAttribute('height', h);
-        }
-      } else if (this.activeTool === 'circle' && this.activeSvgTemp) {
-        const cx = ((this.startCoord.x + pt.x) / 2) * this.scale;
-        const cy = ((this.startCoord.y + pt.y) / 2) * this.scale;
-        const rx = (Math.abs(pt.x - this.startCoord.x) / 2) * this.scale;
-        const ry = (Math.abs(pt.y - this.startCoord.y) / 2) * this.scale;
-        this.activeSvgTemp.setAttribute('cx', cx);
-        this.activeSvgTemp.setAttribute('cy', cy);
-        this.activeSvgTemp.setAttribute('rx', rx);
-        this.activeSvgTemp.setAttribute('ry', ry);
-      } else if (this.activeTool === 'arrow' && this.activeSvgTemp) {
-        this.activeSvgTemp.setAttribute('x1', this.startCoord.x * this.scale);
-        this.activeSvgTemp.setAttribute('y1', this.startCoord.y * this.scale);
-        this.activeSvgTemp.setAttribute('x2', pt.x * this.scale);
-        this.activeSvgTemp.setAttribute('y2', pt.y * this.scale);
-      } else if (this.activeTool === 'measure' && this.activeSvgTemp) {
-        this.activeSvgTemp.setAttribute('x1', this.startCoord.x * this.scale);
-        this.activeSvgTemp.setAttribute('y1', this.startCoord.y * this.scale);
-        this.activeSvgTemp.setAttribute('x2', pt.x * this.scale);
-        this.activeSvgTemp.setAttribute('y2', pt.y * this.scale);
-      }
-    });
-
-    window.addEventListener('mouseup', (e) => {
-      if (!this.isDrawing) return;
-      this.isDrawing = false;
-      const pt = getPagePoint(e);
-
-      if (this.activeTool === 'pen' && this.drawingPoints.length > 1) {
-        this.annotationsManager.addAnnotation(pageIndex, {
-          type: 'ink',
-          color: this.toolOptions.color || '#4f46e5',
-          width: this.toolOptions.strokeWidth || 3,
-          points: this.drawingPoints,
-        });
-      } else if (this.activeTool === 'rect') {
-        const x = Math.min(this.startCoord.x, pt.x);
-        const y = Math.min(this.startCoord.y, pt.y);
-        const width = Math.abs(pt.x - this.startCoord.x);
-        const height = Math.abs(pt.y - this.startCoord.y);
-        if (width > 5 && height > 5) {
-          this.annotationsManager.addAnnotation(pageIndex, {
-            type: 'rect',
-            x, y, width, height,
-            strokeColor: this.toolOptions.color || '#ef4444',
-            strokeWidth: this.toolOptions.strokeWidth || 2,
-            fillColor: 'transparent',
-          });
-        }
-      } else if (this.activeTool === 'redact') {
-        const x = Math.min(this.startCoord.x, pt.x);
-        const y = Math.min(this.startCoord.y, pt.y);
-        const width = Math.abs(pt.x - this.startCoord.x);
-        const height = Math.abs(pt.y - this.startCoord.y);
-        if (width > 5 && height > 5) {
-          this.annotationsManager.addAnnotation(pageIndex, {
-            type: 'redaction',
-            x, y, width, height,
-            applied: true,
-            textOverlay: 'REDACTED',
-          });
-        }
-      } else if (this.activeTool === 'highlight') {
-        const x = Math.min(this.startCoord.x, pt.x);
-        const y = Math.min(this.startCoord.y, pt.y);
-        const width = Math.abs(pt.x - this.startCoord.x);
-        const height = Math.abs(pt.y - this.startCoord.y);
-        if (width > 4 && height > 4) {
-          this.annotationsManager.addAnnotation(pageIndex, {
-            type: 'highlight',
-            x, y, width, height,
-            color: this.toolOptions.highlighterColor || '#facc15',
-            opacity: 0.4,
-          });
-        }
-      } else if (this.activeTool === 'circle') {
-        const x = Math.min(this.startCoord.x, pt.x);
-        const y = Math.min(this.startCoord.y, pt.y);
-        const width = Math.abs(pt.x - this.startCoord.x);
-        const height = Math.abs(pt.y - this.startCoord.y);
-        if (width > 5 && height > 5) {
-          this.annotationsManager.addAnnotation(pageIndex, {
-            type: 'circle',
-            x: (this.startCoord.x + pt.x) / 2,
-            y: (this.startCoord.y + pt.y) / 2,
-            radiusX: width / 2,
-            radiusY: height / 2,
-            strokeColor: this.toolOptions.color || '#ef4444',
-            strokeWidth: this.toolOptions.strokeWidth || 2,
-          });
-        }
-      } else if (this.activeTool === 'arrow') {
-        this.annotationsManager.addAnnotation(pageIndex, {
-          type: 'line',
-          startX: this.startCoord.x,
-          startY: this.startCoord.y,
-          endX: pt.x,
-          endY: pt.y,
-          strokeColor: this.toolOptions.color || '#ef4444',
-          strokeWidth: this.toolOptions.strokeWidth || 2,
-        });
-      } else if (this.activeTool === 'measure') {
-        const dx = pt.x - this.startCoord.x;
-        const dy = pt.y - this.startCoord.y;
-        const distPts = Math.sqrt(dx * dx + dy * dy);
-        if (distPts > 5) {
-          const unit = this.toolOptions.measureUnit || 'in';
-          let label = '';
-          if (unit === 'in') {
-            label = `${(distPts / 72).toFixed(2)} in`;
-          } else if (unit === 'mm') {
-            label = `${((distPts / 72) * 25.4).toFixed(1)} mm`;
-          } else if (unit === 'ft') {
-            label = `${(distPts / 18).toFixed(1)} ft`;
-          } else if (unit === 'm') {
-            label = `${(distPts / 28.346).toFixed(2)} m`;
-          } else {
-            label = `${Math.round(distPts)} pt`;
-          }
-          this.annotationsManager.addAnnotation(pageIndex, {
-            type: 'measure',
-            startX: this.startCoord.x,
-            startY: this.startCoord.y,
-            endX: pt.x,
-            endY: pt.y,
-            distPts,
-            label,
-            unit,
-            color: this.toolOptions.color || '#4f46e5',
-          });
-        }
-      }
-
-      if (this.activeSvgTemp && this.activeSvgTemp.parentNode) {
-        this.activeSvgTemp.parentNode.removeChild(this.activeSvgTemp);
-      }
-      this.activeSvgTemp = null;
-      this.drawingPoints = [];
-      this.startCoord = null;
     });
   }
 

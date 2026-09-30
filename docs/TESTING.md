@@ -182,6 +182,14 @@ During interactive testing via Playwright browser and desktop computer-use tools
    - *Requirement*: Opening a new document must always initialize viewport scroll to the top of page 1; single-page and presentation modes must avoid miscalculating page indices from hidden elements having `offsetTop = 0`.
    - *Implementation*: Explicitly reset `canvasView.currentPage = 1`, `scrollTop = 0`, and `scrollLeft = 0` in `loadDocumentBytes()`; guarded `detectCurrentPage()` to bypass single-page mode and ignore hidden page wrappers (`display === 'none'`). Verified slide stepping on DISPLAY=:101.
 
+37. **Document Outline & Bookmarks Tree Generation in Sample Generators**:
+   - *Requirement*: Enable document outline inspection and one-click navigation across multi-page sample documents.
+   - *Implementation*: Constructed standard PDF `/Outlines` dictionaries and item hierarchies (`1. Welcome & Capabilities`, `2. Shortcuts & Power Tips`, `3. Architecture & Principles`, and landscape slide outlines) in `samples.js` using `pdf-lib`. Verified PDF.js outline extraction and sidebar outline navigation on DISPLAY=:101.
+
+38. **Centralized Global Drawing Event Architecture with Page Isolation**:
+   - *Requirement*: Drawing and measurement interactions must accurately bind to the specific page receiving mouse events, preventing event leakage or coordinate distortion across multi-page views.
+   - *Implementation*: Consolidated drawing `mousemove` and `mouseup` into single global listeners on `CanvasView` that track `activeDrawingPageIndex` and `activePageWrap`, eliminating per-page duplicate listener leaks and ensuring multi-page vector annotations attach to the exact targeted page. Verified on DISPLAY=:101.
+
 ---
 
 ## 4. Automated Test Suite Status

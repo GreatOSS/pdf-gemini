@@ -1,4 +1,4 @@
-import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
+import { PDFDocument, rgb, StandardFonts, PDFName, PDFHexString } from 'pdf-lib';
 
 /**
  * Generates the "FolioFlux Feature Tour" sample PDF.
@@ -412,6 +412,51 @@ export async function createTourSamplePDF() {
     color: rgb(0.5, 0.55, 0.65),
   });
 
+  // Embed interactive document outline
+  try {
+    const context = doc.context;
+    const outlinesDictRef = context.nextRef();
+    const item1Ref = context.nextRef();
+    const item2Ref = context.nextRef();
+    const item3Ref = context.nextRef();
+
+    const item1 = context.obj({
+      Title: PDFHexString.fromText('1. Welcome & Capabilities'),
+      Parent: outlinesDictRef,
+      Next: item2Ref,
+      Dest: [p1.ref, PDFName.of('Fit')],
+    });
+    const item2 = context.obj({
+      Title: PDFHexString.fromText('2. Shortcuts & Power Tips'),
+      Parent: outlinesDictRef,
+      Prev: item1Ref,
+      Next: item3Ref,
+      Dest: [p2.ref, PDFName.of('Fit')],
+    });
+    const item3 = context.obj({
+      Title: PDFHexString.fromText('3. Architecture & Principles'),
+      Parent: outlinesDictRef,
+      Prev: item2Ref,
+      Dest: [p3.ref, PDFName.of('Fit')],
+    });
+
+    const outlinesDict = context.obj({
+      Type: PDFName.of('Outlines'),
+      First: item1Ref,
+      Last: item3Ref,
+      Count: 3,
+    });
+
+    context.assign(outlinesDictRef, outlinesDict);
+    context.assign(item1Ref, item1);
+    context.assign(item2Ref, item2);
+    context.assign(item3Ref, item3);
+
+    doc.catalog.set(PDFName.of('Outlines'), outlinesDictRef);
+  } catch (err) {
+    console.warn('Failed to embed tour outline:', err);
+  }
+
   return await doc.save();
 }
 
@@ -714,6 +759,42 @@ export async function createPresentationSamplePDF() {
     font: fontRegular,
     color: rgb(0.5, 0.55, 0.65),
   });
+
+  // Embed presentation slides outline
+  try {
+    const context = doc.context;
+    const outlinesDictRef = context.nextRef();
+    const item1Ref = context.nextRef();
+    const item2Ref = context.nextRef();
+
+    const item1 = context.obj({
+      Title: PDFHexString.fromText('Slide 1: Architecture & Roadmap'),
+      Parent: outlinesDictRef,
+      Next: item2Ref,
+      Dest: [s1.ref, PDFName.of('Fit')],
+    });
+    const item2 = context.obj({
+      Title: PDFHexString.fromText('Slide 2: Technical Schematics & Blueprints'),
+      Parent: outlinesDictRef,
+      Prev: item1Ref,
+      Dest: [s2.ref, PDFName.of('Fit')],
+    });
+
+    const outlinesDict = context.obj({
+      Type: PDFName.of('Outlines'),
+      First: item1Ref,
+      Last: item2Ref,
+      Count: 2,
+    });
+
+    context.assign(outlinesDictRef, outlinesDict);
+    context.assign(item1Ref, item1);
+    context.assign(item2Ref, item2);
+
+    doc.catalog.set(PDFName.of('Outlines'), outlinesDictRef);
+  } catch (err) {
+    console.warn('Failed to embed presentation outline:', err);
+  }
 
   return await doc.save();
 }
