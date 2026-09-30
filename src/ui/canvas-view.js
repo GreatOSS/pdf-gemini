@@ -490,6 +490,7 @@ export class CanvasView {
 
     await this.renderVisiblePages();
     this.renderAllAnnotations();
+    this.detectCurrentPage();
   }
 
   bindPageInteractions(pageIndex, pageWrap, svgOverlay, overlayLayer) {
@@ -1286,6 +1287,7 @@ export class CanvasView {
   }
 
   setLayoutMode(mode) {
+    const prevPage = this.currentPage;
     this.layoutMode = mode;
     if (mode === 'two-page') {
       const containerWidth = this.scrollContainer.clientWidth - 80;
@@ -1296,7 +1298,9 @@ export class CanvasView {
         if (this.onScaleChange) this.onScaleChange(this.scale);
       }
     }
-    this.buildPages();
+    this.buildPages().then(() => {
+      this.scrollToPage(prevPage);
+    });
   }
 
   setTool(tool, options = {}) {

@@ -206,6 +206,10 @@ During interactive testing via Playwright browser and desktop computer-use tools
    - *Requirement*: Enable rapid tool selection for inking and erasing without navigating toolbar menus.
    - *Implementation*: Mapped `W` and `I` to freehand inking (`pen`) and `X` to the `eraser` tool. Added entries to Help & Shortcuts modal.
 
+43. **Layout Mode State Preservation and Accurate Re-Alignment**:
+   - *Requirement*: Switching between Single Page, Two-Page Spread, and Continuous Vertical Scroll must maintain reading position and keep the active page indicator synchronized without losing viewport context.
+   - *Implementation*: Preserved active page state in `setLayoutMode()`; hooked `scrollToPage()` and `detectCurrentPage()` after asynchronous DOM page rebuilding. Verified on DISPLAY=:101.
+
 ---
 
 ## 4. Automated Test Suite Status
