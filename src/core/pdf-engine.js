@@ -1,11 +1,13 @@
 import * as pdfjsLib from 'pdfjs-dist';
 
+const assetBase = import.meta.env?.BASE_URL || '/';
+
 // Configure the worker source
 if (typeof window !== 'undefined') {
-  pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
-  pdfjsLib.GlobalWorkerOptions.cMapUrl = '/cmaps/';
+  pdfjsLib.GlobalWorkerOptions.workerSrc = assetBase + 'pdf.worker.min.mjs';
+  pdfjsLib.GlobalWorkerOptions.cMapUrl = assetBase + 'cmaps/';
   pdfjsLib.GlobalWorkerOptions.cMapPacked = true;
-  pdfjsLib.GlobalWorkerOptions.standardFontDataUrl = '/standard_fonts/';
+  pdfjsLib.GlobalWorkerOptions.standardFontDataUrl = assetBase + 'standard_fonts/';
 }
 
 export class PDFEngine {
@@ -44,9 +46,9 @@ export class PDFEngine {
 
     const loadingTask = pdfjsLib.getDocument({
       data: workerData,
-      cMapUrl: '/cmaps/',
+      cMapUrl: assetBase + 'cmaps/',
       cMapPacked: true,
-      standardFontDataUrl: '/standard_fonts/',
+      standardFontDataUrl: assetBase + 'standard_fonts/',
     });
 
     if (typeof onPassword === 'function') {

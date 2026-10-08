@@ -47,17 +47,20 @@ export class FolioFluxApp {
   }
 
   async initDocument() {
-    try {
-      const resp = await fetch('/api/initial-document');
-      if (resp.ok) {
-        const buffer = await resp.arrayBuffer();
-        const disposition = resp.headers.get('Content-Disposition') || '';
-        const match = disposition.match(/filename="(.+)"/);
-        const fileName = match ? match[1] : 'document.pdf';
-        await this.loadDocumentBytes(new Uint8Array(buffer), fileName);
-        return;
-      }
-    } catch {}
+    // The CLI endpoint exists only when served at the origin root.
+    if ((import.meta.env?.BASE_URL || '/') === '/') {
+      try {
+        const resp = await fetch('/api/initial-document');
+        if (resp.ok) {
+          const buffer = await resp.arrayBuffer();
+          const disposition = resp.headers.get('Content-Disposition') || '';
+          const match = disposition.match(/filename="(.+)"/);
+          const fileName = match ? match[1] : 'document.pdf';
+          await this.loadDocumentBytes(new Uint8Array(buffer), fileName);
+          return;
+        }
+      } catch {}
+    }
 
     // Fallback: auto-load welcome tour sample so the app is immediately alive and ready to use
     await this.loadSampleTour();

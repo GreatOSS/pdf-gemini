@@ -1,5 +1,7 @@
 # FolioFlux 📄⚡
 
+[Open the web app](https://greatoss.github.io/pdf-gemini/)
+
 > **The Modern, Lightning-Fast Open-Source PDF Viewer & Editor with an Uncompromising Focus on Flawless User Experience.**
 
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
@@ -141,3 +143,7 @@ FolioFlux includes a powerful command-line interface for common PDF tasks:
 ## License
 
 FolioFlux is licensed under the [Apache License 2.0](LICENSE).
+
+## GitHub Pages
+
+Pushes to `main` run tests and build the app for `/pdf-gemini/`, then deploy `dist/` with GitHub Actions. The workflow can also be started manually. PDF documents continue to be processed locally in the browser.
